@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COBRA v5.0 - Canvas Mode</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'unsafe-inline' 'self'; connect-src 'self' https://api.openai.com https://api.anthropic.com https://api.elevenlabs.io https://*.supabase.co https://generativelanguage.googleapis.com https://api.groq.com;">
+
+    <style>
+        :root {
+            --primary-cyan: #52BBFF;
+            --accent-purple: #B24BFF;
+            --bg-dark: #0A0A0D;
+            --card-dark: #151720;
+            --glass-border: hsl(0 0% 100% / 0.18);
+            --text-primary: #FFFFFF;
+            --text-secondary: #A0A0A8;
+            --easing: cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #0F0F13 100%);
+            color: var(--text-primary);
+            background-attachment: fixed;
+        }
+
+        /* Ambient particle background */
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(82, 187, 255, 0.3);
+            border-radius: 50%;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .particle:nth-child(1) { width: 1px; height: 1px; left: 15%; top: 20%; animation-delay: 0s; }
+        .particle:nth-child(2) { width: 1.5px; height: 1.5px; left: 80%; top: 30%; animation-delay: 2s; }
+        .particle:nth-child(3) { width: 2px; height: 2px; left: 25%; top: 70%; animation-delay: 4s; }
+        .particle:nth-child(4) { width: 1px; height: 1px; left: 75%; top: 80%; animation-delay: 1s; background: rgba(178, 75, 255, 0.2); }
+        .particle:nth-child(5) { width: 1.5px; height: 1.5px; left: 50%; top: 15%; animation-delay: 3s; }
+        .particle:nth-child(6) { width: 1px; height: 1px; left: 35%; top: 55%; animation-delay: 5s; background: rgba(82, 187, 255, 0.25); }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) translateX(0px); opacity: 0.3; }
+            50% { transform: translateY(-30px) translateX(20px); opacity: 0.6; }
+        }
+
+        /* Container layout */
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        /* Top bar */
+        .topbar {
+            height: 60px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--glass-border);
+            background: rgba(21, 23, 32, 0.6);
+            backdrop-filter: blur(20px);
+            z-index: 20;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .logo-glow {
+            display: inline-block;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo-glow::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(135deg, var(--primary-cyan), var(--accent-purple));
+            border-radius: 8px;
+            opacity: 0.3;
+            filter: blur(8px);
+            animation: pulse-glow 2s var(--easing) infinite;
+            z-index: -1;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            background: var(--primary-cyan);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+            box-shadow: 0 0 10px var(--primary-cyan);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .mode-switcher {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .mode-btn {
+            padding: 6px 12px;
+            background: rgba(82, 187, 255, 0.1);
+            border: 1px solid rgba(82, 187, 255, 0.3);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            cursor: pointer;
+            transition: all 0.3s var(--easing);
+        }
+
+        .mode-btn:hover {
+            background: rgba(82, 187, 255, 0.2);
+            color: var(--primary-cyan);
+            box-shadow: 0 0 15px rgba(82, 187, 255, 0.3);
+        }
+
+        .mode-btn.active {
+            background: var(--primary-cyan);
+            color: var(--bg-dark);
+            border-color: var(--primary-cyan);
+        }
+
+        /* Canvas area */
+        .canvas {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Central AI entity/orb */
+        .ai-entity {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            left: 50%;
+            top: 35%;
+            transform: translate(-50%, -50%);
+            animation: breathe 3s var(--easing) infinite;
+            z-index: 15;
+        }
+
+        .orb-outer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(82, 187, 255, 0.4), transparent);
+            box-shadow: 0 0 40px rgba(82, 187, 255, 0.5), inset -20px -20px 40px rgba(0, 0, 0, 0.5);
+            animation: spin 8s linear infinite;
+        }
+
+        .orb-middle {
+            position: absolute;
+            width: 80%;
+            height: 80%;
+            top: 10%;
+            left: 10%;
+            border-radius: 50%;
+            border: 2px solid rgba(178, 75, 255, 0.5);
+            box-shadow: 0 0 30px rgba(178, 75, 255, 0.4);
+            animation: spin-reverse 12s linear infinite;
+        }
+
+        .orb-inner {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            top: 25%;
+            left: 25%;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(82, 187, 255, 0.8), transparent);
+            box-shadow: 0 0 60px rgba(82, 187, 255, 0.8);
+            animation: pulse-entity 2s var(--easing) infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes spin-reverse {
+            from { transform: rotate(360deg); }
+            to { transform: rotate(0deg); }
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.05); }
+        }
+
+        @keyframes pulse-entity {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+
+        /* Messages and content cards */
+        .content-cards {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .message-card {
+            position: absolute;
+            max-width: 320px;
+            padding: 16px;
+            background: rgba(21, 23, 32, 0.7);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            animation: slide-up 0.6s var(--easing) forwards;
+            pointer-events: auto;
+            cursor: default;
+        }
+
+        @keyframes slide-up {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .message-card:nth-child(1) { animation-delay: 0.1s; bottom: 120px; right: 40px; }
+        .message-card:nth-child(2) { animation-delay: 0.2s; bottom: 40px; left: 40px; }
+        .message-card:nth-child(3) { animation-delay: 0.3s; top: 100px; right: 80px; }
+
+        .message-card.sender {
+            background: rgba(82, 187, 255, 0.1);
+            border-color: rgba(82, 187, 255, 0.3);
+        }
+
+        .message-card.receiver {
+            background: rgba(178, 75, 255, 0.08);
+            border-color: rgba(178, 75, 255, 0.2);
+        }
+
+        .message-header {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .message-text {
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--text-primary);
+        }
+
+        /* Data card */
+        .data-card {
+            position: absolute;
+            min-width: 280px;
+            padding: 20px;
+            background: rgba(21, 23, 32, 0.8);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            animation: flip-in 0.8s var(--easing) forwards;
+            pointer-events: auto;
+        }
+
+        @keyframes flip-in {
+            from {
+                opacity: 0;
+                transform: rotateY(90deg) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: rotateY(0) scale(1);
+            }
+        }
+
+        .data-card { top: 200px; left: 40px; animation-delay: 0.2s; }
+
+        .data-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .data-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary-cyan);
+            font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+            margin-bottom: 12px;
+        }
+
+        .data-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Status pill */
+        .status-pill {
+            position: absolute;
+            padding: 8px 16px;
+            background: rgba(82, 187, 255, 0.15);
+            border: 1px solid rgba(82, 187, 255, 0.4);
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--primary-cyan);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: float-orbit 6s ease-in-out infinite;
+            pointer-events: auto;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--primary-cyan);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--primary-cyan);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes float-orbit {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(30px, -20px); }
+            50% { transform: translate(0, -40px); }
+            75% { transform: translate(-30px, -20px); }
+        }
+
+        .status-pill { bottom: 200px; right: 60px; animation-delay: 0s; }
+
+        /* Command input */
+        .command-input-wrapper {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 600px;
+            z-index: 30;
+        }
+
+        .command-input-container {
+            position: relative;
+            animation: slide-up-input 0.8s var(--easing) forwards;
+        }
+
+        @keyframes slide-up-input {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .command-input {
+            width: 100%;
+            padding: 14px 20px;
+            background: rgba(21, 23, 32, 0.8);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            backdrop-filter: blur(20px);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s var(--easing);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .command-input:focus {
+            background: rgba(21, 23, 32, 0.95);
+            border-color: rgba(82, 187, 255, 0.5);
+            box-shadow: 0 0 30px rgba(82, 187, 255, 0.3), 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .command-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        /* Autocomplete suggestions */
+        .suggestions {
+            position: absolute;
+            bottom: 60px;
+            left: 0;
+            right: 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 10px 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s var(--easing);
+            pointer-events: none;
+        }
+
+        .suggestions.active {
+            max-height: 200px;
+            pointer-events: auto;
+        }
+
+        .suggestion-chip {
+            padding: 6px 14px;
+            background: rgba(82, 187, 255, 0.15);
+            border: 1px solid rgba(82, 187, 255, 0.3);
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s var(--easing);
+            animation: chip-float 0.4s var(--easing) forwards;
+            opacity: 0;
+        }
+
+        @keyframes chip-float {
+            from {
+                opacity: 0;
+                transform: translateY(10px) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .suggestion-chip:hover {
+            background: rgba(82, 187, 255, 0.25);
+            border-color: rgba(82, 187, 255, 0.5);
+            color: var(--primary-cyan);
+            cursor: pointer;
+        }
+
+        .suggestion-chip:nth-child(1) { animation-delay: 0.05s; }
+        .suggestion-chip:nth-child(2) { animation-delay: 0.1s; }
+        .suggestion-chip:nth-child(3) { animation-delay: 0.15s; }
+        .suggestion-chip:nth-child(4) { animation-delay: 0.2s; }
+
+        /* Empty state text */
+        .empty-state {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 12;
+            opacity: 0.6;
+            transition: opacity 0.3s var(--easing);
+        }
+
+        .empty-state.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .empty-state-title {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .empty-state-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Hover effect lift */
+        .message-card:hover,
+        .data-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 48px rgba(82, 187, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <!-- Ambient particles -->
+    <div class="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <!-- Main container -->
+    <div class="container">
+        <!-- Top bar -->
+        <div class="topbar">
+            <div class="logo-section">
+                <span class="logo logo-glow">COBRA</span>
+                <div class="status-indicator"></div>
+            </div>
+            <div class="mode-switcher">
+                <button class="mode-btn active" data-mode="canvas">Canvas</button>
+                <button class="mode-btn" data-mode="classic" id="switchClassicBtn">Classic</button>
+            </div>
+        </div>
+
+        <!-- Canvas area -->
+        <div class="canvas">
+            <!-- Central AI entity -->
+            <div class="ai-entity">
+                <div class="orb-outer"></div>
+                <div class="orb-middle"></div>
+                <div class="orb-inner"></div>
+            </div>
+
+            <!-- Content cards -->
+            <div class="content-cards">
+                <!-- Sample message cards -->
+                <div class="message-card sender">
+                    <div class="message-header">You</div>
+                    <div class="message-text">Scrape product data from the page</div>
+                </div>
+
+                <div class="message-card receiver">
+                    <div class="message-header">COBRA Assistant</div>
+                    <div class="message-text">Found 42 products. Processing data now...</div>
+                </div>
+
+                <div class="message-card receiver">
+                    <div class="message-header">Status</div>
+                    <div class="message-text">Extraction complete. Ready for export.</div>
+                </div>
+
+                <!-- Data card -->
+                <div class="data-card">
+                    <div class="data-label">Products Found</div>
+                    <div class="data-value">42</div>
+                    <div class="data-subtitle">Last 5 minutes</div>
+                </div>
+
+                <!-- Status pill -->
+                <div class="status-pill">
+                    <div class="status-dot"></div>
+                    <span>Active</span>
+                </div>
+            </div>
+
+            <!-- Empty state -->
+            <div class="empty-state hidden" id="emptyState">
+                <div class="empty-state-title">Ready to assist</div>
+                <div class="empty-state-text">Type a command or interact with COBRA</div>
+            </div>
+
+            <!-- Command input wrapper -->
+            <div class="command-input-wrapper">
+                <div class="command-input-container">
+                    <input
+                        type="text"
+                        class="command-input"
+                        id="commandInput"
+                        placeholder="Ask COBRA anything... (e.g., 'scrape products', 'check KB', 'pricing rules')"
+                        autocomplete="off"
+                    >
+                    <div class="suggestions" id="suggestions">
+                        <div class="suggestion-chip">Scrape Page</div>
+                        <div class="suggestion-chip">Check KB Rules</div>
+                        <div class="suggestion-chip">Price Analysis</div>
+                        <div class="suggestion-chip">Export Data</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="onboarding.js"></script>
+    <script src="sidepanel-canvas-app.js"></script>
+</body>
+</html>

@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COBRA Team Admin Panel</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0A0A0D 0%, #1a1a22 100%);
+      color: #e8eaed;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* ===== LOGIN PAGE ===== */
+    .login-page {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #0A0A0D 0%, #1a1a22 100%);
+      z-index: 1000;
+      opacity: 1;
+      transition: opacity 300ms ease;
+    }
+
+    .login-page.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 400px;
+      background: rgba(15, 15, 20, 0.8);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(82, 187, 255, 0.2);
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .login-logo {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .login-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #52BBFF;
+      margin-bottom: 8px;
+    }
+
+    .login-subtitle {
+      font-size: 14px;
+      color: #a8adb5;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #b4b9c2;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .form-input {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(82, 187, 255, 0.2);
+      color: #e8eaed;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: all 200ms ease;
+      font-family: inherit;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #52BBFF;
+      background: rgba(82, 187, 255, 0.1);
+      box-shadow: 0 0 0 3px rgba(82, 187, 255, 0.1);
+    }
+
+    .form-error {
+      color: #ff6b6b;
+      font-size: 12px;
+      margin-top: 4px;
+      display: none;
+    }
+
+    .form-error.visible {
+      display: block;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border-radius: 8px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 200ms ease;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #52BBFF 0%, #3da8ff 100%);
+      color: #0A0A0D;
+      width: 100%;
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 0 20px rgba(82, 187, 255, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid rgba(82, 187, 255, 0.3);
+      color: #52BBFF;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(82, 187, 255, 0.1);
+      border-color: #52BBFF;
+    }
+
+    .btn-danger {
+      background: rgba(255, 100, 100, 0.1);
+      border: 1px solid rgba(255, 100, 100, 0.3);
+      color: #ff6464;
+      padding: 8px 12px;
+      font-size: 12px;
+    }
+
+    .btn-danger:hover {
+      background: rgba(255, 100, 100, 0.2);
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(82, 187, 255, 0.3);
+      border-top-color: #52BBFF;
+      border-radius: 50%;
+      animation: spin 800ms linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ===== DASHBOARD ===== */
+    .dashboard {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 300ms ease;
+    }
+
+    .dashboard.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid rgba(82, 187, 255, 0.1);
+    }
+
+    .dashboard-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .dashboard-title h1 {
+      font-size: 32px;
+      font-weight: 700;
+      color: #52BBFF;
+    }
+
+    .dashboard-title .team-name {
+      font-size: 14px;
+      color: #a8adb5;
+      background: rgba(82, 187, 255, 0.1);
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(82, 187, 255, 0.2);
+    }
+
+    .logout-btn {
+      padding: 10px 20px;
+      background: rgba(255, 100, 100, 0.1);
+      border: 1px solid rgba(255, 100, 100, 0.3);
+      color: #ff6464;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 200ms ease;
+    }
+
+    .logout-btn:hover {
+      background: rgba(255, 100, 100, 0.2);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: rgba(15, 15, 20, 0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(82, 187, 255, 0.1);
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .panel-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #52BBFF;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #b4b9c2;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 20px;
+      margin-bottom: 12px;
+    }
+
+    .section-title:first-child {
+      margin-top: 0;
+    }
+
+    .members-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .member-item {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(82, 187, 255, 0.1);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .member-info {
+      flex: 1;
+    }
+
+    .member-email {
+      font-size: 13px;
+      font-weight: 600;
+      color: #e8eaed;
+      margin-bottom: 4px;
+    }
+
+    .member-meta {
+      font-size: 12px;
+      color: #a8adb5;
+      display: flex;
+      gap: 12px;
+    }
+
+    .member-role {
+      display: inline-block;
+      padding: 2px 8px;
+      background: rgba(82, 187, 255, 0.15);
+      border: 1px solid rgba(82, 187, 255, 0.2);
+      border-radius: 4px;
+      font-size: 11px;
+      color: #52BBFF;
+      font-weight: 600;
+    }
+
+    .member-role.invited {
+      background: rgba(255, 180, 75, 0.15);
+      border-color: rgba(255, 180, 75, 0.2);
+      color: #ffb44b;
+    }
+
+    .add-member-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 600px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .keys-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .key-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 6px;
+      font-size: 12px;
+    }
+
+    .key-item .key-label {
+      color: #a8adb5;
+      min-width: 100px;
+    }
+
+    .key-item input {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(82, 187, 255, 0.2);
+      color: #e8eaed;
+      padding: 6px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .key-item input:focus {
+      outline: none;
+      border-color: #52BBFF;
+      background: rgba(82, 187, 255, 0.1);
+    }
+
+    .toggle-show {
+      background: transparent;
+      border: none;
+      color: #52BBFF;
+      cursor: pointer;
+      padding: 0;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 600px) {
+      .stats {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .stat {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(82, 187, 255, 0.1);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #52BBFF;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #a8adb5;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .info-box {
+      background: rgba(82, 187, 255, 0.1);
+      border: 1px solid rgba(82, 187, 255, 0.2);
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 12px;
+      color: #52BBFF;
+      margin-bottom: 16px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 24px;
+      color: #a8adb5;
+    }
+
+    .success-message {
+      background: rgba(76, 175, 80, 0.1);
+      border: 1px solid rgba(76, 175, 80, 0.2);
+      color: #4caf50;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .success-message.visible {
+      display: block;
+    }
+
+    .error-message {
+      background: rgba(255, 100, 100, 0.1);
+      border: 1px solid rgba(255, 100, 100, 0.2);
+      color: #ff6464;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .error-message.visible {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <!-- LOGIN PAGE -->
+  <div class="login-page" id="loginPage">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-logo">🐍</div>
+        <h1 class="login-title">COBRA Admin</h1>
+        <p class="login-subtitle">Team Management Console</p>
+      </div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input
+            type="email"
+            class="form-input"
+            id="loginEmail"
+            placeholder="admin@company.com"
+            required
+          />
+          <div class="form-error" id="emailError"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input
+            type="password"
+            class="form-input"
+            id="loginPassword"
+            placeholder="••••••••"
+            required
+          />
+          <div class="form-error" id="passwordError"></div>
+        </div>
+
+        <div class="form-error" id="loginError"></div>
+
+        <button type="submit" class="btn btn-primary" id="loginBtn">
+          Sign In
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="dashboard" id="dashboard">
+    <div class="container">
+      <div class="dashboard-header">
+        <div class="dashboard-title">
+          <h1>Team Admin</h1>
+          <span class="team-name" id="teamNameDisplay"></span>
+        </div>
+        <button class="logout-btn" id="logoutBtn">Logout</button>
+      </div>
+
+      <div class="grid-2">
+        <!-- LEFT: TEAM MEMBERS & STATS -->
+        <div class="panel">
+          <div class="panel-title">👥 Team Members</div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="stat-value" id="memberCount">0</div>
+              <div class="stat-label">Members</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value" id="invitedCount">0</div>
+              <div class="stat-label">Invited</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value" id="totalTokens">0</div>
+              <div class="stat-label">Tokens Used</div>
+            </div>
+          </div>
+
+          <div class="success-message" id="memberSuccess"></div>
+          <div class="error-message" id="memberError"></div>
+
+          <div class="section-title">Current Members</div>
+          <div class="members-list" id="membersList">
+            <div class="loading">Loading members...</div>
+          </div>
+
+          <div class="section-title">Add New Member</div>
+          <form class="add-member-form" id="addMemberForm">
+            <input
+              type="email"
+              class="form-input"
+              id="newMemberEmail"
+              placeholder="user@company.com"
+              required
+            />
+
+            <div class="form-row">
+              <select class="form-input" id="newMemberRole">
+                <option value="team">Team Member</option>
+                <option value="invited">Invited (Limited)</option>
+              </select>
+              <input
+                type="number"
+                class="form-input"
+                id="newMemberTokenLimit"
+                placeholder="Token limit (optional)"
+              />
+            </div>
+
+            <input
+              type="datetime-local"
+              class="form-input"
+              id="newMemberDateLimit"
+              title="Expiry date for invited users"
+            />
+
+            <button type="submit" class="btn btn-primary">
+              Add Member
+            </button>
+          </form>
+        </div>
+
+        <!-- RIGHT: API KEYS -->
+        <div class="panel">
+          <div class="panel-title">🔑 Shared API Keys</div>
+
+          <div class="info-box">
+            Team members can use these keys in their COBRA instances. Keys are encrypted at rest.
+          </div>
+
+          <div class="success-message" id="keysSuccess"></div>
+          <div class="error-message" id="keysError"></div>
+
+          <button
+            class="btn btn-secondary"
+            style="width: 100%; margin-bottom: 16px;"
+            id="toggleKeysBtn"
+          >
+            👁️ Show Keys
+          </button>
+
+          <div class="keys-section" id="keysSection" style="display: none;">
+            <div class="key-item">
+              <span class="key-label">OpenAI</span>
+              <input
+                type="password"
+                class="api-key-input"
+                data-key="openai_key"
+                placeholder="sk-..."
+              />
+              <button type="button" class="toggle-show" data-key="openai_key">👁️</button>
+            </div>
+
+            <div class="key-item">
+              <span class="key-label">Anthropic</span>
+              <input
+                type="password"
+                class="api-key-input"
+                data-key="anthropic_key"
+                placeholder="sk-ant-..."
+              />
+              <button type="button" class="toggle-show" data-key="anthropic_key">👁️</button>
+            </div>
+
+            <div class="key-item">
+              <span class="key-label">Gemini</span>
+              <input
+                type="password"
+                class="api-key-input"
+                data-key="gemini_key"
+                placeholder="AIzaSy..."
+              />
+              <button type="button" class="toggle-show" data-key="gemini_key">👁️</button>
+            </div>
+
+            <div class="key-item">
+              <span class="key-label">Groq</span>
+              <input
+                type="password"
+                class="api-key-input"
+                data-key="groq_key"
+                placeholder="gsk_..."
+              />
+              <button type="button" class="toggle-show" data-key="groq_key">👁️</button>
+            </div>
+
+            <div class="key-item">
+              <span class="key-label">ElevenLabs</span>
+              <input
+                type="password"
+                class="api-key-input"
+                data-key="eleven_key"
+                placeholder="xi_..."
+              />
+              <button type="button" class="toggle-show" data-key="eleven_key">👁️</button>
+            </div>
+
+            <button type="button" class="btn btn-primary" id="saveKeysBtn">
+              Save Keys
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'https://wca-app.vercel.app/api/team-auth';
+
+    let currentToken = null;
+    let currentAdmin = null;
+    let teamData = null;
+
+    // ===== LOGIN FORM =====
+    const loginForm = document.getElementById('loginForm');
+    const loginPage = document.getElementById('loginPage');
+    const dashboard = document.getElementById('dashboard');
+    const loginBtn = document.getElementById('loginBtn');
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+
+      // Clear errors
+      document.getElementById('loginError').textContent = '';
+      document.getElementById('emailError').textContent = '';
+      document.getElementById('passwordError').textContent = '';
+
+      if (!email || !password) {
+        document.getElementById('loginError').textContent = 'Please fill in all fields';
+        return;
+      }
+
+      loginBtn.disabled = true;
+      loginBtn.innerHTML = '<span class="spinner"></span>';
+
+      try {
+        const res = await fetch(`${API_BASE}?action=admin-login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          throw new Error(data.error || 'Login failed');
+        }
+
+        currentToken = data.token;
+        currentAdmin = data.user;
+        teamData = data.admin_team;
+
+        // Show dashboard
+        loginPage.classList.add('hidden');
+        dashboard.classList.add('visible');
+
+        // Load data
+        updateDashboard();
+        loadTeamMembers();
+        loadApiKeys();
+      } catch (error) {
+        document.getElementById('loginError').textContent = error.message;
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = 'Sign In';
+      }
+    });
+
+    // ===== LOGOUT =====
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      currentToken = null;
+      currentAdmin = null;
+      teamData = null;
+      loginPage.classList.remove('hidden');
+      dashboard.classList.remove('visible');
+      loginForm.reset();
+    });
+
+    // ===== UPDATE DASHBOARD =====
+    function updateDashboard() {
+      if (teamData) {
+        document.getElementById('teamNameDisplay').textContent = teamData.team_name;
+      }
+    }
+
+    // ===== LOAD TEAM MEMBERS =====
+    async function loadTeamMembers() {
+      const list = document.getElementById('membersList');
+      list.innerHTML = '<div class="loading">Loading members...</div>';
+
+      try {
+        const res = await fetch(`${API_BASE}?action=admin-list-members&token=${currentToken}`);
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          throw new Error(data.error || 'Failed to load members');
+        }
+
+        const members = data.members || [];
+        const activeMembers = members.filter(m => m.active);
+        const invitedMembers = members.filter(m => m.role === 'invited' && m.active);
+
+        document.getElementById('memberCount').textContent = activeMembers.filter(m => m.role === 'team').length;
+        document.getElementById('invitedCount').textContent = invitedMembers.length;
+        document.getElementById('totalTokens').textContent = activeMembers.reduce((sum, m) => sum + (m.tokens_used || 0), 0);
+
+        if (activeMembers.length === 0) {
+          list.innerHTML = '<div class="info-box">No team members yet. Add one below!</div>';
+        } else {
+          list.innerHTML = activeMembers.map(member => `
+            <div class="member-item">
+              <div class="member-info">
+                <div class="member-email">${escapeHtml(member.email)}</div>
+                <div class="member-meta">
+                  <span class="member-role ${member.role === 'invited' ? 'invited' : ''}">${member.role}</span>
+                  <span>Tokens: ${member.tokens_used || 0}${member.token_limit ? ` / ${member.token_limit}` : ''}</span>
+                  ${member.date_limit ? `<span>Expires: ${new Date(member.date_limit).toLocaleDateString()}</span>` : ''}
+                </div>
+              </div>
+              <button class="btn btn-danger" onclick="removeMember('${member.id}')">Remove</button>
+            </div>
+          `).join('');
+        }
+      } catch (error) {
+        list.innerHTML = `<div class="error-message" style="display: block;">${escapeHtml(error.message)}</div>`;
+      }
+    }
+
+    // ===== ADD MEMBER =====
+    document.getElementById('addMemberForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('newMemberEmail').value.trim();
+      const role = document.getElementById('newMemberRole').value;
+      const tokenLimit = document.getElementById('newMemberTokenLimit').value;
+      const dateLimit = document.getElementById('newMemberDateLimit').value;
+
+      const successEl = document.getElementById('memberSuccess');
+      const errorEl = document.getElementById('memberError');
+      successEl.classList.remove('visible');
+      errorEl.classList.remove('visible');
+
+      try {
+        const res = await fetch(`${API_BASE}?action=admin-add-member`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: currentToken,
+            email,
+            role,
+            token_limit: tokenLimit ? parseInt(tokenLimit, 10) : null,
+            date_limit: dateLimit ? new Date(dateLimit).toISOString() : null
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          throw new Error(data.error || 'Failed to add member');
+        }
+
+        successEl.textContent = `✓ ${escapeHtml(email)} added as ${role}`;
+        successEl.classList.add('visible');
+        document.getElementById('addMemberForm').reset();
+        loadTeamMembers();
+      } catch (error) {
+        errorEl.textContent = error.message;
+        errorEl.classList.add('visible');
+      }
+    });
+
+    // ===== REMOVE MEMBER =====
+    async function removeMember(memberId) {
+      if (!confirm('Remove this member?')) return;
+
+      try {
+        const res = await fetch(`${API_BASE}?action=admin-remove-member`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: currentToken, user_id: memberId })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          throw new Error(data.error || 'Failed to remove member');
+        }
+
+        loadTeamMembers();
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    }
+
+    // ===== API KEYS MANAGEMENT =====
+    const toggleKeysBtn = document.getElementById('toggleKeysBtn');
+    const keysSection = document.getElementById('keysSection');
+
+    toggleKeysBtn.addEventListener('click', () => {
+      keysSection.style.display = keysSection.style.display === 'none' ? 'flex' : 'none';
+      toggleKeysBtn.textContent = keysSection.style.display === 'none' ? '👁️ Show Keys' : '👁️ Hide Keys';
+    });
+
+    // Toggle password visibility
+    document.querySelectorAll('.toggle-show').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const key = btn.dataset.key;
+        const input = document.querySelector(`.api-key-input[data-key="${key}"]`);
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+        btn.textContent = isPassword ? '🙈' : '👁️';
+      });
+    });
+
+    // Load API keys
+    async function loadApiKeys() {
+      try {
+        const res = await fetch(`${API_BASE}?action=admin-get-keys&token=${currentToken}`);
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          console.error('Failed to load keys:', data.error);
+          return;
+        }
+
+        document.querySelector('[data-key="openai_key"]').value = data.openai_key || '';
+        document.querySelector('[data-key="anthropic_key"]').value = data.anthropic_key || '';
+        document.querySelector('[data-key="gemini_key"]').value = data.gemini_key || '';
+        document.querySelector('[data-key="groq_key"]').value = data.groq_key || '';
+        document.querySelector('[data-key="eleven_key"]').value = data.eleven_key || '';
+      } catch (error) {
+        console.error('Error loading keys:', error);
+      }
+    }
+
+    // Save API keys
+    document.getElementById('saveKeysBtn').addEventListener('click', async () => {
+      const successEl = document.getElementById('keysSuccess');
+      const errorEl = document.getElementById('keysError');
+      successEl.classList.remove('visible');
+      errorEl.classList.remove('visible');
+
+      try {
+        const keys = {};
+        document.querySelectorAll('.api-key-input').forEach(input => {
+          keys[input.dataset.key] = input.value.trim();
+        });
+
+        const res = await fetch(`${API_BASE}?action=admin-set-keys`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: currentToken, ...keys })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          throw new Error(data.error || 'Failed to save keys');
+        }
+
+        successEl.textContent = '✓ API keys saved successfully';
+        successEl.classList.add('visible');
+      } catch (error) {
+        errorEl.textContent = error.message;
+        errorEl.classList.add('visible');
+      }
+    });
+
+    // ===== UTILITY =====
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

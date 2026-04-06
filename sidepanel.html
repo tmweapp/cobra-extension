@@ -1,0 +1,2500 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'unsafe-inline' 'self'; media-src blob: 'self'; connect-src 'self' https://api.openai.com https://api.anthropic.com https://api.elevenlabs.io https://*.supabase.co https://generativelanguage.googleapis.com https://api.groq.com https://wca-app.vercel.app;">
+  <title>COBRA AI</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary-cyan: #52BBFF;
+      --accent-purple: #B24BFF;
+      --bg-dark: #0A0A0D;
+      --card-dark: #151720;
+      --text-primary: #FFFFFF;
+      --text-secondary: #B0B0B5;
+      --border-color: hsla(0, 0%, 100%, 0.08);
+      --easing: cubic-bezier(0.2, 0.8, 0.2, 1);
+      --glass-bg: rgba(21, 23, 32, 0.6);
+      --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      overflow: hidden;
+    }
+
+    #root {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background: linear-gradient(135deg, var(--bg-dark) 0%, #0F0F13 100%);
+    }
+
+    /* ============= HEADER ============= */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-color);
+      gap: 12px;
+      flex-shrink: 0;
+      min-height: 50px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .logo-img {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      background: linear-gradient(135deg, var(--primary-cyan), var(--accent-purple));
+      padding: 2px;
+    }
+
+    .logo-text {
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--primary-cyan);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--primary-cyan), inset 0 0 4px rgba(255, 255, 255, 0.3);
+      animation: pulse 2s var(--easing) infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      cursor: pointer;
+      font-size: 18px;
+      padding: 6px;
+      border-radius: 6px;
+      transition: background 0.2s var(--easing);
+    }
+
+    .icon-btn:hover {
+      background: rgba(82, 187, 255, 0.1);
+    }
+
+    /* ============= MAIN CONTENT ============= */
+    .main-content {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .view {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      overflow: hidden;
+      animation: fadeIn 0.3s var(--easing);
+    }
+
+    .view.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* ============= HOME VIEW ============= */
+    #homeView {
+      flex-direction: column;
+    }
+
+    .agent-bar {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      overflow-x: auto;
+      background: rgba(21, 23, 32, 0.3);
+      min-height: 52px;
+    }
+
+    .agent-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      border: 2px solid transparent;
+      background: rgba(30, 33, 45, 0.6);
+      overflow: hidden;
+    }
+
+    .agent-badge.active {
+      border-color: var(--primary-cyan);
+      box-shadow: 0 0 12px rgba(82, 187, 255, 0.4), 0 0 4px rgba(82, 187, 255, 0.2);
+      animation: agentPulse 2s ease-in-out infinite;
+    }
+
+    .agent-badge.inactive {
+      border-color: rgba(100, 100, 120, 0.3);
+      opacity: 0.55;
+    }
+
+    .agent-badge.leader {
+      border-color: #ffd700;
+      box-shadow: 0 0 14px rgba(255, 215, 0, 0.5), 0 0 4px rgba(255, 215, 0, 0.3);
+      animation: agentPulseGold 2s ease-in-out infinite;
+    }
+
+    .agent-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+      transition: filter 0.3s ease;
+    }
+
+    .agent-badge.active .agent-avatar {
+      filter: none;
+    }
+
+    .agent-badge.inactive .agent-avatar {
+      filter: grayscale(100%) brightness(0.6);
+    }
+
+    @keyframes agentPulse {
+      0%, 100% { box-shadow: 0 0 8px rgba(82, 187, 255, 0.3); }
+      50% { box-shadow: 0 0 16px rgba(82, 187, 255, 0.6), 0 0 6px rgba(82, 187, 255, 0.3); }
+    }
+
+    @keyframes agentPulseGold {
+      0%, 100% { box-shadow: 0 0 8px rgba(255, 215, 0, 0.3); }
+      50% { box-shadow: 0 0 16px rgba(255, 215, 0, 0.6), 0 0 6px rgba(255, 215, 0, 0.3); }
+    }
+
+    .agent-badge:hover {
+      transform: scale(1.1);
+    }
+
+    .agent-badge.inactive:hover {
+      opacity: 0.8;
+      border-color: rgba(82, 187, 255, 0.3);
+    }
+
+    .agent-count {
+      font-size: 11px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      margin-left: auto;
+    }
+
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding: 12px;
+      gap: 12px;
+    }
+
+    #chatMessages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .message {
+      display: flex;
+      gap: 8px;
+      animation: slideIn 0.3s var(--easing);
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message.user {
+      justify-content: flex-end;
+    }
+
+    .message-content {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      word-wrap: break-word;
+    }
+
+    .message.assistant .message-content {
+      background: var(--glass-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .message.user .message-content {
+      background: linear-gradient(135deg, var(--primary-cyan), var(--accent-purple));
+      color: var(--bg-dark);
+      font-weight: 500;
+    }
+
+    /* Chat message styles (msg-* classes from JS) */
+    .msg {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      word-wrap: break-word;
+      animation: slideIn 0.2s ease;
+      max-width: 100%;
+    }
+
+    .msg-ai, .msg-assistant {
+      background: var(--glass-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .msg-user {
+      background: linear-gradient(135deg, var(--primary-cyan), var(--accent-purple));
+      color: var(--bg-dark);
+      font-weight: 500;
+      align-self: flex-end;
+    }
+
+    .msg-system {
+      background: rgba(82, 187, 255, 0.08);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-style: italic;
+    }
+
+    .msg-text {
+      flex: 1;
+      line-height: 1.5;
+    }
+
+    .chat-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      object-fit: cover;
+      border: 1.5px solid var(--primary-cyan);
+      box-shadow: 0 0 6px rgba(82, 187, 255, 0.25);
+    }
+
+    #typingIndicator {
+      display: none;
+      padding: 10px 14px;
+      background: var(--glass-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      width: fit-content;
+    }
+
+    #typingIndicator.active {
+      display: block;
+    }
+
+    /* Mic active state - pulsing red */
+    #micBtn.listening {
+      background: rgba(255, 50, 50, 0.3) !important;
+      animation: micPulse 1s ease-in-out infinite;
+      border-radius: 50%;
+      position: relative;
+    }
+    @keyframes micPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255, 50, 50, 0.5); }
+      50% { box-shadow: 0 0 12px 4px rgba(255, 50, 50, 0.4); }
+    }
+
+    /* Listening indicator bar */
+    #listeningIndicator {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: rgba(255, 50, 50, 0.15);
+      border: 1px solid rgba(255, 50, 50, 0.3);
+      border-radius: 10px;
+      margin: 4px 8px;
+      font-size: 12px;
+      color: #ff6b6b;
+    }
+    #listeningIndicator.active {
+      display: flex;
+    }
+    .listening-wave {
+      display: flex; gap: 2px; align-items: center;
+    }
+    .listening-wave span {
+      display: block; width: 3px; background: #ff6b6b; border-radius: 2px;
+      animation: wave 0.8s ease-in-out infinite;
+    }
+    .listening-wave span:nth-child(1) { height: 8px; animation-delay: 0s; }
+    .listening-wave span:nth-child(2) { height: 14px; animation-delay: 0.1s; }
+    .listening-wave span:nth-child(3) { height: 10px; animation-delay: 0.2s; }
+    .listening-wave span:nth-child(4) { height: 16px; animation-delay: 0.3s; }
+    .listening-wave span:nth-child(5) { height: 8px; animation-delay: 0.4s; }
+    @keyframes wave {
+      0%, 100% { transform: scaleY(0.5); }
+      50% { transform: scaleY(1.2); }
+    }
+
+    .typing-dots {
+      display: flex;
+      gap: 4px;
+    }
+
+    .typing-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--primary-cyan);
+      border-radius: 50%;
+      animation: bounce 1.4s var(--easing) infinite;
+    }
+
+    .typing-dot:nth-child(1) { animation-delay: 0s; }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    #orchestratorIndicator {
+      display: none;
+      padding: 8px 12px;
+      background: rgba(178, 75, 255, 0.15);
+      border: 1px solid var(--accent-purple);
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--accent-purple);
+      text-align: center;
+    }
+
+    #orchestratorIndicator.active {
+      display: block;
+    }
+
+    .actions-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      background: rgba(82, 187, 255, 0.1);
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      transition: background 0.2s var(--easing);
+    }
+
+    .actions-toggle:hover {
+      background: rgba(82, 187, 255, 0.2);
+    }
+
+    .actions-toggle-label {
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    #actionMenu {
+      display: none;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    #actionMenu.active {
+      display: grid;
+    }
+
+    .action-card {
+      padding: 12px;
+      background: var(--glass-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s var(--easing);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      text-align: center;
+      font-size: 12px;
+    }
+
+    .action-card:hover {
+      background: rgba(82, 187, 255, 0.15);
+      border-color: var(--primary-cyan);
+      transform: translateY(-2px);
+    }
+
+    .action-icon {
+      font-size: 20px;
+    }
+
+    .page-context {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background: rgba(82,187,255,0.05);
+      border: 1px solid rgba(82,187,255,0.12);
+      border-radius: 6px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 8px;
+    }
+
+    .page-context-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-secondary);
+      flex-shrink: 0;
+      opacity: 0.5;
+    }
+
+    .page-context.active .page-context-dot {
+      background: #4ade80;
+      opacity: 1;
+      box-shadow: 0 0 6px #4ade80;
+    }
+
+    .page-context-text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chat-input-area {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    #chatInput {
+      flex: 1;
+      background: var(--card-dark);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: none;
+      max-height: 100px;
+      transition: border-color 0.2s var(--easing);
+    }
+
+    #chatInput:focus {
+      outline: none;
+      border-color: var(--primary-cyan);
+    }
+
+    #chatInput::placeholder {
+      color: var(--text-secondary);
+    }
+
+    .chat-buttons {
+      display: flex;
+      gap: 6px;
+    }
+
+    .chat-btn {
+      background: none;
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 16px;
+      transition: all 0.2s var(--easing);
+    }
+
+    .chat-btn:hover {
+      background: rgba(82, 187, 255, 0.15);
+      border-color: var(--primary-cyan);
+    }
+
+    #chatSend {
+      background: linear-gradient(135deg, var(--primary-cyan), var(--accent-purple));
+      border: none;
+      color: var(--bg-dark);
+      font-weight: 600;
+      padding: 8px 14px;
+    }
+
+    #chatSend:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .chat-stop-btn {
+      background: linear-gradient(135deg, #ff4444, #cc2222) !important;
+      border: none !important;
+      color: #fff !important;
+      font-weight: 600;
+      padding: 8px 14px !important;
+      animation: stopPulse 1.5s ease infinite;
+    }
+
+    .chat-stop-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255,68,68,0.4);
+    }
+
+    @keyframes stopPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+
+    /* ============= ARCHIVIO VIEW ============= */
+    #archivioView {
+      flex-direction: column;
+    }
+
+    .archivio-header {
+      padding: 12px;
+      border-bottom: 1px solid var(--border-color);
+      background: rgba(21, 23, 32, 0.3);
+    }
+
+    .archivio-search {
+      width: 100%;
+      padding: 8px 12px;
+      background: var(--card-dark);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .archivio-search::placeholder {
+      color: var(--text-secondary);
+    }
+
+    .sub-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border-color);
+      background: rgba(21, 23, 32, 0.3);
+      padding: 0 12px;
+      overflow-x: auto;
+    }
+
+    .sub-tab {
+      padding: 10px 14px;
+      border: none;
+      background: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 13px;
+      white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s var(--easing);
+    }
+
+    .sub-tab.active {
+      color: var(--primary-cyan);
+      border-bottom-color: var(--primary-cyan);
+    }
+
+    .archivio-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .list-item {
+      padding: 10px 12px;
+      background: var(--glass-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 13px;
+      word-break: break-word;
+      transition: all 0.2s var(--easing);
+    }
+
+    .list-item:hover {
+      background: rgba(82, 187, 255, 0.1);
+      border-color: var(--primary-cyan);
+    }
+
+    .list-item-title {
+      font-weight: 500;
+      color: var(--primary-cyan);
+      margin-bottom: 4px;
+    }
+
+    .list-item-meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .kb-rule {
+      padding: 10px 12px;
+      background: var(--glass-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      margin-bottom: 6px;
+      transition: all 0.2s;
+    }
+    .kb-rule:hover { border-color: var(--primary-cyan); background: rgba(82,187,255,0.05); }
+    .kb-title { font-weight: 600; font-size: 12px; color: var(--text1, #e0e0e0); }
+    .kb-type {
+      font-size: 10px; padding: 2px 8px; border-radius: 10px;
+      background: rgba(82,187,255,0.15); color: var(--accent, #52bbff);
+    }
+    .kb-content { font-size: 11px; color: var(--text3, #888); margin-top: 4px; line-height: 1.4; }
+
+    .archivio-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .action-btn {
+      padding: 8px 12px;
+      background: var(--glass-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s var(--easing);
+    }
+
+    .action-btn:hover {
+      background: rgba(82, 187, 255, 0.15);
+      border-color: var(--primary-cyan);
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 40px 20px;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+
+    .empty-icon {
+      font-size: 40px;
+      opacity: 0.5;
+    }
+
+    /* ============= AI VIEW ============= */
+    #aiView {
+      flex-direction: column;
+      padding: 12px;
+      overflow-y: auto;
+      gap: 16px;
+    }
+
+    .section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .section-title {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--primary-cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .agent-card {
+      padding: 12px;
+      background: var(--glass-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s var(--easing);
+    }
+
+    .agent-card:hover {
+      background: rgba(82, 187, 255, 0.1);
+      border-color: var(--primary-cyan);
+    }
+
+    .agent-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .agent-name {
+      font-weight: 500;
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+
+    .agent-meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .toggle-switch {
+      width: 40px;
+      height: 24px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.3s var(--easing);
+    }
+
+    .toggle-switch.active {
+      background: var(--primary-cyan);
+      border-color: var(--primary-cyan);
+    }
+
+    .toggle-knob {
+      width: 20px;
+      height: 20px;
+      background: var(--text-primary);
+      border-radius: 10px;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      transition: left 0.3s var(--easing);
+    }
+
+    .toggle-switch.active .toggle-knob {
+      left: 18px;
+    }
+
+    .status-badge {
+      padding: 4px 8px;
+      background: rgba(82, 187, 255, 0.15);
+      border: 1px solid var(--primary-cyan);
+      border-radius: 4px;
+      font-size: 11px;
+      color: var(--primary-cyan);
+      text-align: center;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .stat-card {
+      padding: 10px;
+      background: var(--glass-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--primary-cyan);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    /* ============= COMMS VIEW ============= */
+    #commsView {
+      flex-direction: column;
+      padding: 0;
+      overflow-y: auto;
+      gap: 0;
+    }
+
+    .comm-channels {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--glass-bg);
+      flex-shrink: 0;
+    }
+
+    .comm-tab {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 10px 4px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s var(--easing);
+      font-size: 11px;
+      font-family: inherit;
+    }
+
+    .comm-tab:hover { color: var(--text-primary); background: rgba(255,255,255,0.03); }
+
+    .comm-tab.active {
+      color: var(--primary-cyan);
+      border-bottom-color: var(--primary-cyan);
+      background: rgba(82,187,255,0.06);
+    }
+
+    .comm-tab-icon { font-size: 18px; }
+    .comm-tab-label { font-weight: 500; letter-spacing: 0.3px; }
+
+    .comm-stats-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 14px;
+      background: rgba(82,187,255,0.04);
+      border-bottom: 1px solid var(--border-color);
+      font-size: 12px;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    .comm-stat-num {
+      font-weight: 700;
+      color: var(--primary-cyan);
+      font-size: 14px;
+    }
+
+    .comm-stat-divider {
+      width: 1px;
+      height: 14px;
+      background: var(--border-color);
+    }
+
+    .comm-sync-btn {
+      margin-left: auto;
+      padding: 4px 10px;
+      background: rgba(82,187,255,0.1);
+      border: 1px solid rgba(82,187,255,0.3);
+      border-radius: 4px;
+      color: var(--primary-cyan);
+      cursor: pointer;
+      font-size: 11px;
+      font-family: inherit;
+      font-weight: 500;
+      transition: all 0.2s var(--easing);
+    }
+
+    .comm-sync-btn:hover {
+      background: rgba(82,187,255,0.2);
+      border-color: var(--primary-cyan);
+    }
+
+    .comm-compose-wrap {
+      padding: 12px 14px;
+      flex-shrink: 0;
+    }
+
+    .comm-compose {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .comm-field-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .comm-input {
+      flex: 1;
+      background: var(--card-dark);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 9px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      transition: border-color 0.2s var(--easing);
+      outline: none;
+    }
+
+    .comm-input:focus {
+      border-color: var(--primary-cyan);
+    }
+
+    .comm-input::placeholder {
+      color: var(--text-secondary);
+      opacity: 0.7;
+    }
+
+    .comm-textarea {
+      background: var(--card-dark);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 9px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 70px;
+      max-height: 200px;
+      transition: border-color 0.2s var(--easing);
+      outline: none;
+    }
+
+    .comm-textarea:focus {
+      border-color: var(--primary-cyan);
+    }
+
+    .comm-textarea::placeholder {
+      color: var(--text-secondary);
+      opacity: 0.7;
+    }
+
+    .comm-send-btn {
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s var(--easing);
+      letter-spacing: 0.3px;
+    }
+
+    .comm-send-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .comm-send-btn:active { transform: translateY(0); }
+
+    .comm-send-email { background: linear-gradient(135deg, #52BBFF, #3a8fd4); }
+    .comm-send-wa    { background: linear-gradient(135deg, #25d366, #1da851); }
+    .comm-send-li    { background: linear-gradient(135deg, #0077b5, #005e93); }
+
+    .comm-section {
+      padding: 0 14px 12px;
+    }
+
+    .comm-section-header {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      padding: 10px 0 6px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .comm-list {
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .comm-list:empty::after {
+      content: 'Nessun messaggio.';
+      display: block;
+      padding: 12px 0;
+      color: var(--text-secondary);
+      font-size: 12px;
+      opacity: 0.6;
+    }
+
+    .comm-list-small {
+      font-size: 12px;
+      color: var(--text-secondary);
+      max-height: 120px;
+    }
+
+    .comm-list-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .comm-list-item:last-child { border-bottom: none; }
+
+    .comm-list-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(82,187,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .comm-list-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .comm-list-from {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .comm-list-snippet {
+      font-size: 11px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .comm-list-time {
+      font-size: 10px;
+      color: var(--text-secondary);
+      opacity: 0.6;
+      flex-shrink: 0;
+    }
+
+    /* ============= COMM CHAT LAYOUT ============= */
+    .comm-body {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .comm-contacts {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .comm-contacts-header {
+      display: flex;
+      gap: 6px;
+      padding: 8px 12px;
+      flex-shrink: 0;
+    }
+
+    .comm-search-input {
+      flex: 1;
+      font-size: 12px !important;
+      padding: 7px 10px !important;
+    }
+
+    .comm-contact-items {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .comm-contact-items:empty::after {
+      content: 'Nessuna chat. Apri WhatsApp Web e clicca Sync.';
+      display: block;
+      padding: 20px;
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 12px;
+      opacity: 0.6;
+    }
+
+    .comm-contact-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      transition: background 0.15s;
+    }
+
+    .comm-contact-row:hover {
+      background: rgba(82,187,255,0.06);
+    }
+
+    .comm-contact-row.active {
+      background: rgba(82,187,255,0.12);
+      border-left: 2px solid var(--primary-cyan);
+    }
+
+    .comm-contact-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(82,187,255,0.2), rgba(178,75,255,0.2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary-cyan);
+      flex-shrink: 0;
+    }
+
+    .comm-contact-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .comm-contact-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .comm-contact-preview {
+      font-size: 11px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .comm-contact-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .comm-contact-time {
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+
+    .comm-contact-badge {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #25d366;
+    }
+
+    .comm-new-chat {
+      padding: 8px 12px;
+      flex-shrink: 0;
+      border-top: 1px solid var(--border-color);
+    }
+
+    /* Chat view */
+    .comm-chat-view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .comm-chat-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--glass-bg);
+      border-bottom: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+
+    .comm-back-btn {
+      background: none;
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .comm-back-btn:hover { border-color: var(--primary-cyan); }
+
+    .comm-chat-contact-info { flex: 1; min-width: 0; }
+
+    .comm-chat-contact-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .comm-chat-contact-status {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .comm-chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .comm-chat-messages:empty::after {
+      content: 'Nessun messaggio. Clicca Aggiorna per caricare.';
+      display: block;
+      text-align: center;
+      padding: 30px;
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+
+    .comm-msg {
+      max-width: 85%;
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.4;
+      word-wrap: break-word;
+      position: relative;
+    }
+
+    .comm-msg-out {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #005c4b, #004a3d);
+      color: #e9edef;
+      border-bottom-right-radius: 4px;
+    }
+
+    .comm-msg-in {
+      align-self: flex-start;
+      background: var(--card-dark);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      border-bottom-left-radius: 4px;
+    }
+
+    .comm-msg-time {
+      font-size: 10px;
+      color: rgba(255,255,255,0.4);
+      text-align: right;
+      margin-top: 4px;
+    }
+
+    .comm-chat-input-area {
+      display: flex;
+      gap: 6px;
+      padding: 8px 12px;
+      border-top: 1px solid var(--border-color);
+      flex-shrink: 0;
+      align-items: flex-end;
+    }
+
+    .comm-chat-input-area .comm-textarea {
+      flex: 1;
+      min-height: 36px;
+      max-height: 80px;
+    }
+
+    .comm-chat-input-area .comm-send-btn {
+      padding: 8px 14px;
+      flex-shrink: 0;
+    }
+
+    .comm-email-view, .comm-linkedin-view {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    /* ============= SETTINGS VIEW ============= */
+    #settingsView {
+      flex-direction: column;
+      padding: 12px;
+      overflow-y: auto;
+      gap: 16px;
+    }
+
+    .settings-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .settings-section:last-child {
+      border-bottom: none;
+    }
+
+    .setting-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--primary-cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .setting-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .setting-item label {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .setting-input {
+      padding: 8px 10px;
+      background: var(--card-dark);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: monospace;
+    }
+
+    .setting-input:focus {
+      outline: none;
+      border-color: var(--primary-cyan);
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+    }
+
+    .setting-row label {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .setting-select {
+      padding: 6px 10px;
+      background: var(--card-dark);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 12px;
+    }
+
+    .setting-slider {
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border-color);
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .setting-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--primary-cyan);
+      cursor: pointer;
+      transition: all 0.2s var(--easing);
+    }
+
+    .setting-slider::-webkit-slider-thumb:hover {
+      box-shadow: 0 0 8px var(--primary-cyan);
+    }
+
+    .setting-slider::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--primary-cyan);
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s var(--easing);
+    }
+
+    .setting-slider::-moz-range-thumb:hover {
+      box-shadow: 0 0 8px var(--primary-cyan);
+    }
+
+    .status-message {
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .status-message.success {
+      background: rgba(82, 187, 255, 0.15);
+      color: var(--primary-cyan);
+      border: 1px solid var(--primary-cyan);
+    }
+
+    .status-message.error {
+      background: rgba(255, 87, 87, 0.15);
+      color: #FF5757;
+      border: 1px solid #FF5757;
+    }
+
+    /* ============= BOTTOM NAV ============= */
+    .bottom-nav {
+      display: flex;
+      border-top: 1px solid var(--border-color);
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      gap: 0;
+      flex-shrink: 0;
+      min-height: 60px;
+    }
+
+    .nav-tab {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      border: none;
+      background: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 8px;
+      transition: all 0.2s var(--easing);
+      border-top: 2px solid transparent;
+    }
+
+    .nav-tab:hover {
+      color: var(--primary-cyan);
+    }
+
+    .nav-tab.active {
+      color: var(--primary-cyan);
+      border-top-color: var(--primary-cyan);
+      background: rgba(82, 187, 255, 0.05);
+    }
+
+    .nav-icon {
+      font-size: 18px;
+    }
+
+    .nav-label {
+      text-transform: capitalize;
+    }
+
+    /* ============= SCROLLBARS ============= */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(82, 187, 255, 0.3);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(82, 187, 255, 0.6);
+    }
+
+    /* ============= UTILITIES ============= */
+    .hidden {
+      display: none !important;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .mt-8 {
+      margin-top: 8px;
+    }
+
+    .gap-8 {
+      gap: 8px;
+    }
+
+    /* ============= CANVAS ACTIVITY OVERLAY ============= */
+    .canvas-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(10, 10, 13, 0.95);
+      z-index: 9999;
+      flex-direction: column;
+      padding: 12px;
+      overflow-y: auto;
+      backdrop-filter: blur(10px);
+    }
+    .canvas-overlay.active {
+      display: flex;
+    }
+    .canvas-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0 12px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 12px;
+    }
+    .canvas-header h3 {
+      font-size: 14px;
+      color: var(--primary-cyan);
+      font-weight: 600;
+    }
+    .canvas-header .canvas-status {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .canvas-close-btn {
+      background: none;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 11px;
+    }
+    .canvas-close-btn:hover { color: #fff; border-color: var(--primary-cyan); }
+    .canvas-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+    .canvas-card {
+      background: var(--card-dark);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      overflow: hidden;
+      animation: canvasSlideIn 0.3s var(--easing);
+    }
+    @keyframes canvasSlideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .canvas-card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 11px;
+    }
+    .canvas-card-tool {
+      color: var(--primary-cyan);
+      font-weight: 600;
+    }
+    .canvas-card-status {
+      margin-left: auto;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .canvas-card-status.ok { background: rgba(82, 255, 130, 0.15); color: #52ff82; }
+    .canvas-card-status.error { background: rgba(255, 82, 82, 0.15); color: #ff5252; }
+    .canvas-card-status.running { background: rgba(82, 187, 255, 0.15); color: var(--primary-cyan); }
+    .canvas-card-thumb {
+      width: 100%;
+      max-height: 150px;
+      object-fit: cover;
+      object-position: top;
+      display: block;
+    }
+    .canvas-card-info {
+      padding: 8px 10px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .canvas-card-info a {
+      color: var(--primary-cyan);
+      text-decoration: none;
+      word-break: break-all;
+    }
+    .canvas-summary {
+      background: var(--card-dark);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 8px;
+    }
+    .canvas-summary h4 {
+      font-size: 12px;
+      color: var(--primary-cyan);
+      margin-bottom: 8px;
+    }
+    .canvas-summary-links {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .canvas-summary-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 11px;
+      padding: 4px 0;
+    }
+    .canvas-summary-links a:hover { color: var(--primary-cyan); }
+    /* Inline Live Log in Chat */
+    .cobra-live-log {
+      margin: 8px 0;
+      padding: 8px 12px;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border-radius: 10px;
+      border-left: 3px solid #4fc3f7;
+      font-size: 12px;
+      animation: logFadeIn 0.3s ease;
+    }
+    @keyframes logFadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    .cobra-live-log .log-header {
+      font-size: 11px;
+      color: #4fc3f7;
+      font-weight: 600;
+      margin-bottom: 6px;
+      letter-spacing: 0.3px;
+    }
+    .cobra-live-log .log-entries { display: flex; flex-direction: column; gap: 3px; }
+    .cobra-live-log .log-entry {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 0;
+      color: #b0bec5;
+      animation: entrySlide 0.2s ease;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    @keyframes entrySlide { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+    .cobra-live-log .log-icon { font-size: 13px; flex-shrink: 0; }
+    .cobra-live-log .log-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cobra-live-log .log-time { font-size: 10px; color: #546e7a; flex-shrink: 0; font-family: monospace; }
+    .cobra-live-log .log-entry:last-child { color: #e0e0e0; border-bottom: none; }
+    /* COBRA Thinking Stream */
+    .cobra-thinking-active {
+      background: transparent !important;
+      padding: 4px 12px !important;
+      margin: 4px 0 !important;
+      border: none !important;
+      opacity: 0.85;
+    }
+    .thinking-stream {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .thinking-line {
+      font-size: 12px;
+      color: #90a4ae;
+      font-style: italic;
+      padding: 2px 0;
+      animation: thinkFade 0.3s ease;
+      position: relative;
+      padding-left: 16px;
+    }
+    .thinking-line::before {
+      content: '💭';
+      position: absolute;
+      left: 0;
+      font-size: 10px;
+    }
+    .thinking-line:last-child {
+      color: #b0bec5;
+      font-weight: 500;
+    }
+    @keyframes thinkFade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-left">
+        <img src="icons/cobra-logo.png" class="logo-img" alt="COBRA">
+        <span class="logo-text">COBRA</span>
+        <span class="status-dot"></span>
+      </div>
+      <div class="header-right">
+        <button id="speakerBtn" class="icon-btn" aria-label="Speaker" title="Attiva/Disattiva voce">🔇</button>
+        <button id="micBtn" class="icon-btn" aria-label="Microfono" title="Microfono">🎤</button>
+        <button id="settingsBtn" class="icon-btn" aria-label="Impostazioni" title="Impostazioni">⚙️</button>
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+      <!-- HOME VIEW -->
+      <div id="homeView" class="view active" data-view="home">
+        <!-- Agent Bar -->
+        <div class="agent-bar" id="agentBar">
+          <span class="agent-count" id="agentCount">0 agents</span>
+        </div>
+
+        <!-- Chat Container -->
+        <div class="chat-container">
+          <!-- Messages -->
+          <div id="chatMessages"></div>
+
+          <!-- Listening Indicator -->
+          <div id="listeningIndicator">
+            <div class="listening-wave"><span></span><span></span><span></span><span></span><span></span></div>
+            <span id="listeningText">Ascolto in corso... parla ora</span>
+            <button id="stopListeningBtn" style="margin-left:auto; background:rgba(255,50,50,0.3); border:none; color:#ff6b6b; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:11px;">Stop</button>
+          </div>
+
+          <!-- Typing Indicator -->
+          <div id="typingIndicator">
+            <div class="typing-dots">
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+            </div>
+          </div>
+
+          <!-- Orchestrator Indicator -->
+          <div id="orchestratorIndicator">Orchestrator analyzing...</div>
+
+          <!-- Actions Toggle -->
+          <div class="actions-toggle" id="actionMenuToggle">
+            <span class="nav-icon">⚡</span>
+            <span class="actions-toggle-label">Quick Actions</span>
+          </div>
+
+          <!-- Action Cards -->
+          <div id="actionMenu">
+            <div class="action-card" data-action="scrape">
+              <span class="action-icon">🌐</span>
+              <span>Cattura</span>
+            </div>
+            <div class="action-card" data-action="screenshot">
+              <span class="action-icon">📸</span>
+              <span>Screenshot</span>
+            </div>
+            <div class="action-card" data-action="analyze">
+              <span class="action-icon">📊</span>
+              <span>Analizza</span>
+            </div>
+            <div class="action-card" data-action="document">
+              <span class="action-icon">📄</span>
+              <span>Documento</span>
+            </div>
+            <div class="action-card" data-action="monitor">
+              <span class="action-icon">💰</span>
+              <span>Prezzi</span>
+            </div>
+            <div class="action-card" data-action="kb-search">
+              <span class="action-icon">🔍</span>
+              <span>Cerca KB</span>
+            </div>
+          </div>
+
+          <!-- Current page indicator -->
+          <div id="pageContext" class="page-context">
+            <span class="page-context-dot"></span>
+            <span id="pageContextText" class="page-context-text">Nessuna pagina</span>
+          </div>
+
+          <!-- Chat Input -->
+          <div class="chat-input-area">
+            <div id="attachmentPreview" style="display:none; padding:6px 10px; background:var(--card-dark); border:1px solid var(--border-color); border-radius:6px 6px 0 0; font-size:11px; color:var(--text-secondary); display:none;">
+              <span id="attachmentName"></span>
+              <button id="attachmentRemove" style="background:none;border:none;color:#ff5252;cursor:pointer;margin-left:8px;font-size:12px;">✕</button>
+            </div>
+            <textarea id="chatInput" placeholder="Scrivi un messaggio..." rows="1"></textarea>
+            <div class="chat-buttons">
+              <button class="chat-btn" id="chatAttachBtn" title="Allega file">📎</button>
+              <input type="file" id="chatFileInput" style="display:none" accept=".pdf,.txt,.csv,.json,.html,.md,.doc,.docx,.xlsx,.png,.jpg,.jpeg">
+              <button class="chat-btn" id="chatMicBtn" title="Voce">🎙️</button>
+              <button class="chat-btn" id="chatSend" title="Invia">Invia</button>
+              <button class="chat-btn chat-stop-btn" id="chatStopBtn" title="Interrompi" style="display:none;">Stop</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ARCHIVIO VIEW -->
+      <div id="archivioView" class="view" data-view="archivio">
+        <div class="archivio-header">
+          <input type="text" class="archivio-search" placeholder="Cerca in archivio..." id="archivioSearch">
+        </div>
+
+        <div class="sub-tabs">
+          <button class="sub-tab active" data-subtab="memoriaTab">Memoria</button>
+          <button class="sub-tab" data-subtab="promptsTab">Prompts</button>
+          <button class="sub-tab" data-subtab="kbTab">Knowledge Base</button>
+          <button class="sub-tab" data-subtab="jobsTab">Tasks/Jobs</button>
+          <button class="sub-tab" data-subtab="filesTab">Files</button>
+          <button class="sub-tab" data-subtab="cronologiaTab">Cronologia</button>
+        </div>
+
+        <div class="archivio-content">
+          <!-- MEMORIA SUB-TAB -->
+          <div id="memoriaTab" class="archivio-tab sub-content active">
+            <div id="memoriesList"></div>
+            <div class="stats-grid" style="margin: 8px 0;">
+              <div class="stat-card"><div class="stat-value" id="habitTopSites">—</div><div class="stat-label">Top Sites</div></div>
+              <div class="stat-card"><div class="stat-value" id="habitTopAction">—</div><div class="stat-label">Top Action</div></div>
+              <div class="stat-card"><div class="stat-value" id="habitPeakHour">—</div><div class="stat-label">Peak Hour</div></div>
+              <div class="stat-card"><div class="stat-value" id="habitSessions">0</div><div class="stat-label">Sessions</div></div>
+            </div>
+            <div class="archivio-actions">
+              <button class="action-btn" id="memorySyncUp">Sync Up</button>
+              <button class="action-btn" id="memorySyncDown">Sync Down</button>
+              <button class="action-btn" id="memoryClear">Clear</button>
+              <div id="memoryStatus" class="status-message hidden"></div>
+            </div>
+          </div>
+
+          <!-- PROMPTS SUB-TAB -->
+          <div id="promptsTab" class="archivio-tab sub-content hidden">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Prompts operativi salvati. COBRA li usa automaticamente quando riconosce il contesto.</div>
+            <div id="kbPromptsList"></div>
+            <div style="margin-top:12px;padding:10px;background:var(--glass-bg);border:1px solid var(--border-color);border-radius:10px;">
+              <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:8px;">Nuovo Prompt</div>
+              <input type="text" id="newPromptTitle" placeholder="Titolo (es: Ricerca voli)" style="width:100%;padding:6px 10px;background:var(--bg2);border:1px solid var(--border-color);border-radius:6px;color:var(--text1);font-size:12px;margin-bottom:6px;">
+              <input type="text" id="newPromptDomain" placeholder="Dominio (es: kayak.com, voli, scraping)" style="width:100%;padding:6px 10px;background:var(--bg2);border:1px solid var(--border-color);border-radius:6px;color:var(--text1);font-size:12px;margin-bottom:6px;">
+              <textarea id="newPromptContent" placeholder="Contenuto del prompt / istruzioni operative..." rows="4" style="width:100%;padding:6px 10px;background:var(--bg2);border:1px solid var(--border-color);border-radius:6px;color:var(--text1);font-size:12px;resize:vertical;margin-bottom:6px;"></textarea>
+              <input type="text" id="newPromptTags" placeholder="Tags (virgola separati)" style="width:100%;padding:6px 10px;background:var(--bg2);border:1px solid var(--border-color);border-radius:6px;color:var(--text1);font-size:12px;margin-bottom:8px;">
+              <button class="action-btn" id="saveNewPrompt" style="width:100%;">Salva Prompt</button>
+            </div>
+          </div>
+
+          <!-- KB SUB-TAB -->
+          <div id="kbTab" class="archivio-tab sub-content hidden">
+            <div style="display:flex;gap:6px;margin-bottom:8px;">
+              <div class="stat-card" style="flex:1;text-align:center;"><div class="stat-value" id="kbTotalRules">0</div><div class="stat-label">Regole</div></div>
+              <div class="stat-card" style="flex:1;text-align:center;"><div class="stat-value" id="kbDomains">0</div><div class="stat-label">Domini</div></div>
+              <div class="stat-card" style="flex:1;text-align:center;"><div class="stat-value" id="kbPrompts">0</div><div class="stat-label">Prompts</div></div>
+            </div>
+
+            <!-- Category filter -->
+            <div style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap;">
+              <button class="action-btn kb-cat-filter active" data-cat="all" style="font-size:10px;padding:3px 8px;">Tutti</button>
+              <button class="action-btn kb-cat-filter" data-cat="tool" style="font-size:10px;padding:3px 8px;">Tool</button>
+              <button class="action-btn kb-cat-filter" data-cat="workflow" style="font-size:10px;padding:3px 8px;">Workflow</button>
+              <button class="action-btn kb-cat-filter" data-cat="behavior" style="font-size:10px;padding:3px 8px;">Behavior</button>
+              <button class="action-btn kb-cat-filter" data-cat="selector" style="font-size:10px;padding:3px 8px;">Selettori</button>
+              <button class="action-btn kb-cat-filter" data-cat="correction" style="font-size:10px;padding:3px 8px;">Correzioni</button>
+              <button class="action-btn kb-cat-filter" data-cat="pattern" style="font-size:10px;padding:3px 8px;">Pattern</button>
+            </div>
+
+            <div id="kbRulesList"></div>
+
+            <div style="margin-top:12px;padding:10px;background:var(--glass-bg);border:1px solid var(--border-color);border-radius:10px;">
+              <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:8px;">Nuova Entry KB</div>
+              <input type="text" id="newRuleName" placeholder="Titolo entry" style="width:100%;padding:6px 10px;background:var(--bg2);border:1px solid var(--border-color);border-radius:6px;color:var(--text1);font-size:12px;margin-bottom:6px;">
+              <input type="text" id="newRuleDomain" placeholder="Dominio (vuoto = globale)" style="width:100%;padding:6px 10px;background:var(--bg2);border:1px solid var(--border-color);border-radius:6px;color:var(--text1);font-size:12px;margin-bottom:6px;">
+              <select id="newRuleType" style="width:100%;padding:6px 10px;background:var(--bg2);border:1px solid var(--border-color);border-radius:6px;color:var(--text1);font-size:12px;margin-bottom:6px;">
+                <option value="tool">Tool</option>
+                <option value="workflow">Workflow</option>
+                <option value="behavior">Behavior</option>
+                <option value="selector">Selettore CSS</option>
+                <option value="pattern">Pattern</option>
+                <option value="correction">Correzione</option>
+                <option value="instruction">Istruzione</option>
+              </select>
+              <textarea id="newRuleContent" placeholder="Contenuto (max 10 righe)..." rows="3" style="width:100%;padding:6px 10px;background:var(--bg2);border:1px solid var(--border-color);border-radius:6px;color:var(--text1);font-size:12px;resize:vertical;margin-bottom:6px;" maxlength="500"></textarea>
+              <input type="text" id="newRuleTags" placeholder="Tags (virgola separati)" style="width:100%;padding:6px 10px;background:var(--bg2);border:1px solid var(--border-color);border-radius:6px;color:var(--text1);font-size:12px;margin-bottom:8px;">
+              <button class="action-btn" id="saveNewRule" style="width:100%;">Salva in KB</button>
+            </div>
+
+            <div class="archivio-actions" style="margin-top:10px;">
+              <button class="action-btn" id="kbExport">Export</button>
+              <button class="action-btn" id="kbImport">Import</button>
+              <button class="action-btn" id="kbSyncCloud">Cloud Sync</button>
+              <button class="action-btn" id="kbReseed" style="color:#f59e0b;">Re-Seed</button>
+              <div id="kbStatus" class="status-message hidden"></div>
+            </div>
+          </div>
+
+          <!-- TASKS/JOBS SUB-TAB -->
+          <div id="jobsTab" class="archivio-tab sub-content hidden">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Task multi-step creati da COBRA. Puoi riprendere, modificare o rieseguire.</div>
+            <div id="tasksList"></div>
+            <div style="margin-top:12px;font-size:11px;font-weight:600;color:var(--accent);">Jobs Attivi</div>
+            <div id="activeJobsList"></div>
+            <div style="margin-top:12px;font-size:11px;font-weight:600;color:var(--accent);">Completati</div>
+            <div id="completedJobsList"></div>
+
+            <!-- Persistent Jobs (v5.2 CobraJobs Engine) -->
+            <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">
+              <div style="font-size:12px;font-weight:600;color:var(--primary-cyan);margin-bottom:6px;">Jobs Persistenti (v5.2)</div>
+              <div style="font-size:10px;color:var(--text3);margin-bottom:8px;">Job con lifecycle completo: avvia, pausa, riprendi, cancella. Sopravvivono al restart.</div>
+              <div id="activeRunStatus" style="margin-bottom:8px;font-size:11px;"></div>
+              <div id="persistentJobsList"></div>
+            </div>
+          </div>
+
+          <!-- FILES SUB-TAB -->
+          <div id="filesTab" class="archivio-tab sub-content hidden">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">File creati da COBRA e accesso al file system locale.</div>
+            <button class="action-btn" id="connectFolderBtn" style="width:100%;margin-bottom:10px;padding:10px;font-size:13px;background:linear-gradient(135deg, rgba(82,187,255,0.15), rgba(147,130,255,0.15));border:1px dashed var(--primary-cyan);">📂 Connetti Cartella del Computer</button>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:8px;">Puoi connettere più cartelle. COBRA scarica automaticamente i file prodotti in Downloads/COBRA/.</div>
+            <div style="display:flex;gap:6px;margin-bottom:10px;">
+              <div class="stat-card" style="flex:1;text-align:center;"><div class="stat-value" id="filesTotalCount">0</div><div class="stat-label">File</div></div>
+              <div class="stat-card" style="flex:1;text-align:center;"><div class="stat-value" id="filesTotalSize">0 KB</div><div class="stat-label">Dimensione</div></div>
+            </div>
+            <div id="filesList" style="display:flex;flex-direction:column;gap:6px;"></div>
+            <div style="margin-top:12px;padding:10px;background:var(--glass-bg);border:1px solid var(--border-color);border-radius:10px;">
+              <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:8px;">Elabora con AI</div>
+              <div style="font-size:10px;color:var(--text3);margin-bottom:8px;">Incolla testo o dati qui e chiedi all'AI di elaborarli in un file.</div>
+              <textarea id="fileAIInput" placeholder="Incolla dati, testo, tabella... poi clicca Elabora" rows="4" style="width:100%;padding:6px 10px;background:var(--bg2);border:1px solid var(--border-color);border-radius:6px;color:var(--text1);font-size:12px;resize:vertical;margin-bottom:6px;"></textarea>
+              <input type="text" id="fileAIPrompt" placeholder="Cosa vuoi fare? (es: converti in CSV, riassumi, traduci...)" style="width:100%;padding:6px 10px;background:var(--bg2);border:1px solid var(--border-color);border-radius:6px;color:var(--text1);font-size:12px;margin-bottom:8px;">
+              <button class="action-btn" id="fileAIProcess" style="width:100%;">Elabora con AI</button>
+            </div>
+            <div class="archivio-actions" style="margin-top:10px;">
+              <button class="action-btn" id="filesRefresh">Aggiorna</button>
+              <button class="action-btn" id="filesClearAll">Cancella Tutto</button>
+              <div id="filesStatus" class="status-message hidden"></div>
+            </div>
+          </div>
+
+          <!-- CRONOLOGIA SUB-TAB -->
+          <div id="cronologiaTab" class="archivio-tab sub-content hidden">
+            <div id="activityLog"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMMS VIEW — Messaging App Layout -->
+      <div id="commsView" class="view" data-view="comms">
+        <!-- Top: channel selector -->
+        <div class="comm-channels">
+          <button class="comm-tab active" data-channel="whatsapp">
+            <span class="comm-tab-icon">💬</span>
+            <span class="comm-tab-label">WhatsApp</span>
+          </button>
+          <button class="comm-tab" data-channel="email">
+            <span class="comm-tab-icon">📧</span>
+            <span class="comm-tab-label">Email</span>
+          </button>
+          <button class="comm-tab" data-channel="linkedin">
+            <span class="comm-tab-icon">💼</span>
+            <span class="comm-tab-label">LinkedIn</span>
+          </button>
+        </div>
+
+        <!-- Main content: split panel or inbox -->
+        <div class="comm-body">
+          <!-- Contact list (left / default view) -->
+          <div id="commContactList" class="comm-contacts">
+            <div class="comm-contacts-header">
+              <input type="text" id="commSearchContacts" class="comm-input comm-search-input" placeholder="Cerca...">
+              <button class="comm-sync-btn" id="commSyncBtn" title="Aggiorna">Sync</button>
+            </div>
+            <div id="commContactItems" class="comm-contact-items"></div>
+            <!-- New conversation button -->
+            <div class="comm-new-chat">
+              <button class="comm-send-btn comm-send-wa" id="commNewChatBtn" style="width:100%;">+ Nuova conversazione</button>
+            </div>
+          </div>
+
+          <!-- Chat view (opens when contact selected) -->
+          <div id="commChatView" class="comm-chat-view" style="display:none;">
+            <div class="comm-chat-header">
+              <button class="comm-back-btn" id="commBackBtn" title="Indietro">&larr;</button>
+              <div class="comm-chat-contact-info">
+                <div class="comm-chat-contact-name" id="commChatName">—</div>
+                <div class="comm-chat-contact-status" id="commChatStatus"></div>
+              </div>
+              <button class="comm-sync-btn" id="commRefreshChat" title="Aggiorna chat">Aggiorna</button>
+            </div>
+            <div id="commChatMessages" class="comm-chat-messages"></div>
+            <div class="comm-chat-input-area">
+              <textarea id="commChatInput" class="comm-textarea" rows="1" placeholder="Scrivi un messaggio..."></textarea>
+              <button class="comm-send-btn comm-send-wa" id="commChatSendBtn">Invia</button>
+            </div>
+          </div>
+
+          <!-- Email compose (shown when email tab active) -->
+          <div id="commEmailView" class="comm-email-view" style="display:none;">
+            <div class="comm-compose-wrap">
+              <div class="comm-compose">
+                <div class="comm-field-row">
+                  <input type="email" id="commEmailTo" placeholder="Destinatario" class="comm-input">
+                </div>
+                <div class="comm-field-row">
+                  <input type="text" id="commEmailSubject" placeholder="Oggetto" class="comm-input">
+                </div>
+                <textarea id="commEmailBody" placeholder="Scrivi il messaggio..." class="comm-textarea" rows="4"></textarea>
+                <button class="comm-send-btn comm-send-email" id="commSendEmailBtn">Invia Email</button>
+              </div>
+            </div>
+            <div class="comm-section">
+              <div class="comm-section-header">Inbox recente</div>
+              <div id="commInboxList" class="comm-list"></div>
+            </div>
+            <div class="comm-section">
+              <div class="comm-section-header">Ultimi invii</div>
+              <div id="commSentLog" class="comm-list comm-list-small"></div>
+            </div>
+          </div>
+
+          <!-- LinkedIn view -->
+          <div id="commLinkedinView" class="comm-linkedin-view" style="display:none;">
+            <div class="comm-compose-wrap">
+              <div class="comm-compose">
+                <div class="comm-field-row">
+                  <input type="text" id="commLiRecipient" placeholder="Profilo o nome" class="comm-input">
+                </div>
+                <textarea id="commLiText" placeholder="Scrivi il messaggio..." class="comm-textarea" rows="4" maxlength="8000"></textarea>
+                <button class="comm-send-btn comm-send-li" id="commSendLiBtn">Invia LinkedIn</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI VIEW -->
+      <div id="aiView" class="view" data-view="ai">
+        <div class="section">
+          <div class="section-title">Active Agents</div>
+          <div id="activeAgentsList"></div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-value" id="agentCountDisplay">0</div>
+              <div class="stat-label">Active</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="agentLeader">—</div>
+              <div class="stat-label">Leader</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Orchestration</div>
+          <div id="orchestrationStatus" class="status-badge">Idle</div>
+          <div class="list-item" style="margin-top: 8px;">
+            <div class="list-item-title">Provider</div>
+            <div class="list-item-meta" id="orchestrationProvider">Not configured</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">System Stats</div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-value" id="uptime">0h</div>
+              <div class="stat-label">Uptime</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="memoryUsage">0%</div>
+              <div class="stat-label">Memory</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="tasksCompleted">0</div>
+              <div class="stat-label">Tasks</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="apiLatency">0ms</div>
+              <div class="stat-label">API Latency</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS VIEW -->
+      <div id="settingsView" class="view" data-view="settings">
+        <!-- AI PROVIDERS -->
+        <div class="settings-section">
+          <div class="setting-label">🤖 AI Providers</div>
+
+          <div class="setting-item">
+            <label>OpenAI API Key</label>
+            <input type="password" id="openaiKey" class="setting-input" placeholder="sk-...">
+            <select id="openaiModel" class="setting-select">
+              <option value="gpt-4">GPT-4</option>
+              <option value="gpt-4-turbo">GPT-4 Turbo</option>
+              <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+            </select>
+          </div>
+
+          <div class="setting-item">
+            <label>Anthropic API Key</label>
+            <input type="password" id="anthropicKey" class="setting-input" placeholder="sk-ant-...">
+            <select id="anthropicModel" class="setting-select">
+              <option value="claude-opus-4-5">Claude Opus 4</option>
+              <option value="claude-3-5-sonnet-20241022">Claude Sonnet 3.5</option>
+              <option value="claude-3-haiku-20240307">Claude Haiku 3</option>
+            </select>
+          </div>
+
+          <div class="setting-item">
+            <label>Google Gemini API Key</label>
+            <input type="password" id="geminiKey" class="setting-input" placeholder="AIzaSy...">
+            <select id="geminiModel" class="setting-select">
+              <option value="gemini-pro">Gemini Pro</option>
+              <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+            </select>
+          </div>
+
+          <div class="setting-item">
+            <label>Groq API Key</label>
+            <input type="password" id="groqKey" class="setting-input" placeholder="gsk_...">
+            <select id="groqModel" class="setting-select">
+              <option value="llama-3.3-70b-versatile">Llama 3.3 70B</option>
+              <option value="llama-3.1-8b-instant">Llama 3.1 8B (fast)</option>
+              <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- VOICE -->
+        <div class="settings-section">
+          <div class="setting-label">🎤 Voice (ElevenLabs)</div>
+
+          <div class="setting-item">
+            <label>ElevenLabs API Key</label>
+            <input type="password" id="elevenKey" class="setting-input" placeholder="sk_...">
+          </div>
+
+          <div class="setting-item">
+            <label>Lingua voci</label>
+            <select id="voiceLangFilter" class="setting-select">
+              <option value="">Tutte le lingue</option>
+              <option value="it">Italiano</option>
+              <option value="en">English</option>
+              <option value="es">Español</option>
+              <option value="fr">Français</option>
+              <option value="de">Deutsch</option>
+              <option value="pt">Português</option>
+              <option value="pl">Polski</option>
+              <option value="hi">Hindi</option>
+              <option value="ar">Arabic</option>
+              <option value="zh">Chinese</option>
+              <option value="ja">Japanese</option>
+              <option value="ko">Korean</option>
+            </select>
+          </div>
+
+          <div class="setting-item">
+            <label>Voce</label>
+            <select id="voiceSelect" class="setting-select">
+              <option value="">Caricamento voci...</option>
+            </select>
+          </div>
+
+          <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+            <button id="voicePreview" class="action-btn" style="flex: 1;">▶️ Anteprima</button>
+            <button id="voiceRefresh" class="action-btn" style="flex: 1;">🔄 Aggiorna voci</button>
+          </div>
+
+          <div id="voiceInfo" style="font-size: 11px; color: #888; padding: 4px 0;"></div>
+
+          <div class="setting-row">
+            <label>Velocità</label>
+            <div style="flex: 1; padding: 0 12px; display: flex; align-items: center; gap: 8px;">
+              <input type="range" id="voiceSpeed" class="setting-slider" min="0.5" max="2" step="0.1" value="1">
+              <span id="voiceSpeedLabel" style="font-size: 11px; color: #52BBFF; min-width: 30px;">1.0x</span>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <label>Modello TTS</label>
+            <select id="voiceModel" class="setting-select">
+              <option value="eleven_multilingual_v2">Multilingual v2 (migliore)</option>
+              <option value="eleven_turbo_v2_5">Turbo v2.5 (veloce)</option>
+              <option value="eleven_turbo_v2">Turbo v2</option>
+              <option value="eleven_monolingual_v1">Monolingual v1 (inglese)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- STORAGE -->
+        <div class="settings-section">
+          <div class="setting-label">💾 Storage</div>
+
+          <div class="setting-item">
+            <label>Supabase URL</label>
+            <input type="text" id="supabaseUrl" class="setting-input" placeholder="https://xxx.supabase.co">
+          </div>
+
+          <div class="setting-item">
+            <label>Supabase API Key</label>
+            <input type="password" id="supabaseKey" class="setting-input" placeholder="eyJhbG...">
+          </div>
+
+          <button id="testSupabase" class="action-btn" style="width: 100%;">Test Connection</button>
+        </div>
+
+        <!-- BEHAVIOR -->
+        <div class="settings-section">
+          <div class="setting-label">⚙️ Behavior</div>
+
+          <div class="setting-row">
+            <label>Stealth Mode</label>
+            <div class="toggle-switch" id="toggleStealth">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <label>Local Memory</label>
+            <div class="toggle-switch" id="toggleLocalMemory">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <label>Cloud Sync</label>
+            <div class="toggle-switch" id="toggleCloudSync">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <label>Learning</label>
+            <div class="toggle-switch" id="toggleLearning">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <label>Knowledge Base</label>
+            <div class="toggle-switch" id="toggleKB">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <label>Notifications</label>
+            <div class="toggle-switch" id="toggleNotifications">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <label>Orchestration</label>
+            <div class="toggle-switch" id="toggleOrchestration">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <label>Voice Mode</label>
+            <div class="toggle-switch" id="toggleVoice">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- POLICY ENGINE (v5.2) -->
+        <div class="settings-section">
+          <div class="setting-label">🛡️ Policy Engine</div>
+          <div class="setting-item">
+            <label>Trust Level</label>
+            <select id="policyTrustLevel" class="setting-select" onchange="savePolicyTrust()">
+              <option value="0">0 — Untrusted</option>
+              <option value="1">1 — Basic</option>
+              <option value="2" selected>2 — Standard</option>
+              <option value="3">3 — Trusted</option>
+              <option value="4">4 — Admin</option>
+            </select>
+          </div>
+          <div style="font-size:10px;color:var(--text3);padding:0 12px 8px;">Controlla quali tool possono essere eseguiti. Standard (2) è il livello consigliato.</div>
+        </div>
+
+        <!-- PREFERENCES -->
+        <div class="settings-section">
+          <div class="setting-label">🌍 Preferences</div>
+
+          <div class="setting-item">
+            <label>Language</label>
+            <select id="aiLanguage" class="setting-select">
+              <option value="it">Italiano</option>
+              <option value="en">English</option>
+              <option value="es">Español</option>
+              <option value="fr">Français</option>
+            </select>
+          </div>
+
+          <div class="setting-item">
+            <label>Rate Limit Mode</label>
+            <select id="rateLimitMode" class="setting-select">
+              <option value="conservative">Conservative</option>
+              <option value="normal">Normal</option>
+              <option value="aggressive">Aggressive</option>
+            </select>
+          </div>
+
+          <div class="setting-item">
+            <label>Webhook URL (optional)</label>
+            <input type="text" id="webhookUrl" class="setting-input" placeholder="https://...">
+          </div>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="settings-section">
+          <div class="setting-label">💾 Data</div>
+
+          <div style="display: flex; gap: 8px;">
+            <button id="exportData" class="action-btn" style="flex: 1;">📤 Export</button>
+            <button id="importData" class="action-btn" style="flex: 1;">📥 Import</button>
+          </div>
+
+          <div id="settingsStatus" class="status-message hidden" style="margin-top: 8px;"></div>
+          <div id="connectStatus" class="status-message hidden" style="margin-top: 8px;"></div>
+        </div>
+
+        <!-- COMMUNICATION HUB CONFIG -->
+        <div class="settings-section">
+          <div class="setting-label">📨 Communication Hub</div>
+
+          <div class="setting-item">
+            <label>Email</label>
+            <input type="email" id="commCfgEmail" class="setting-input" placeholder="tuo@email.com">
+            <button class="action-btn" id="commDiscoverBtn" style="margin-top:4px;font-size:11px;">🔍 Auto-discover server</button>
+          </div>
+
+          <div class="setting-item">
+            <label>Password / App Password</label>
+            <input type="password" id="commCfgPassword" class="setting-input" placeholder="password o app password">
+          </div>
+
+          <div class="setting-item">
+            <label>IMAP Host</label>
+            <input type="text" id="commCfgImapHost" class="setting-input" placeholder="imap.gmail.com">
+          </div>
+
+          <div class="setting-item" style="display:flex;gap:8px;">
+            <div style="flex:1;">
+              <label>IMAP Port</label>
+              <input type="number" id="commCfgImapPort" class="setting-input" value="993">
+            </div>
+            <div style="flex:1;">
+              <label>SMTP Port</label>
+              <input type="number" id="commCfgSmtpPort" class="setting-input" value="587">
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <label>SMTP Host</label>
+            <input type="text" id="commCfgSmtpHost" class="setting-input" placeholder="smtp.gmail.com">
+          </div>
+
+          <div class="setting-item">
+            <label>Proxy URL (edge function)</label>
+            <input type="text" id="commCfgProxy" class="setting-input" placeholder="https://xxx.supabase.co/functions/v1/email-imap-proxy">
+          </div>
+
+          <div class="setting-item">
+            <button class="action-btn" id="commTestBtn" style="width:100%;">🧪 Test connessione</button>
+            <div id="commTestStatus" style="font-size:11px;margin-top:4px;color:var(--text-secondary);"></div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+
+          <button id="saveSettings" class="action-btn" style="width: 100%; margin-top: 8px; background: linear-gradient(135deg, var(--primary-cyan), var(--accent-purple)); color: var(--bg-dark); font-weight: 600; border: none;">Save All Settings</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM NAVIGATION -->
+    <nav class="bottom-nav">
+      <button class="nav-tab active" data-view="home" title="Home">
+        <span class="nav-icon">💬</span>
+        <span class="nav-label">Home</span>
+      </button>
+      <button class="nav-tab" data-view="archivio" title="Archivio">
+        <span class="nav-icon">📦</span>
+        <span class="nav-label">Archivio</span>
+      </button>
+      <button class="nav-tab" data-view="comms" title="Comunicazioni">
+        <span class="nav-icon">📨</span>
+        <span class="nav-label">Comm</span>
+      </button>
+      <button class="nav-tab" data-view="ai" title="AI">
+        <span class="nav-icon">🤖</span>
+        <span class="nav-label">AI</span>
+      </button>
+      <button class="nav-tab" data-view="settings" title="Impostazioni">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Opzioni</span>
+      </button>
+    </nav>
+
+    <!-- Canvas Activity Overlay -->
+    <div id="canvasOverlay" class="canvas-overlay">
+      <div class="canvas-header">
+        <h3>COBRA al lavoro...</h3>
+        <span class="canvas-status" id="canvasStatus">preparazione</span>
+        <button class="canvas-close-btn" id="canvasClose">Chiudi</button>
+      </div>
+      <div class="canvas-feed" id="canvasFeed"></div>
+      <div class="canvas-summary" id="canvasSummary" style="display:none">
+        <h4>Riepilogo</h4>
+        <div class="canvas-summary-links" id="canvasSummaryLinks"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="onboarding.js"></script>
+  <script src="sidepanel.js"></script>
+</body>
+</html>

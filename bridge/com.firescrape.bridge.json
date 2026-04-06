@@ -1,0 +1,9 @@
+{
+  "name": "com.firescrape.bridge",
+  "description": "FireScrape Local Bridge — HTTP API for external software control",
+  "path": "PLACEHOLDER_PATH",
+  "type": "stdio",
+  "allowed_origins": [
+    "PLACEHOLDER_EXTENSION_ID"
+  ]
+}
