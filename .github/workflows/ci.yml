@@ -36,7 +36,7 @@ jobs:
           echo "Coverage threshold enforced by jest.config.js coverageThresholds"
           echo "Minimum: 60% lines, 60% functions, 50% branches"
       - name: Upload coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage
           path: coverage/
@@ -99,7 +99,7 @@ jobs:
             echo "::warning::Extension zip exceeds 2MB ($SIZE_KB KB)"
           fi
       - name: Upload extension
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cobra-extension
           path: cobra-extension.zip
