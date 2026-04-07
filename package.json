@@ -21,7 +21,7 @@
     "prepare": "husky install"
   },
   "devDependencies": {
-    "eslint": "^9.0.0",
+    "eslint": "^10.2.0",
     "eslint-plugin-security": "^2.1.0",
     "eslint-plugin-sonarjs": "^0.24.0",
     "prettier": "^3.3.0",
