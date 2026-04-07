@@ -10,6 +10,10 @@ class KnowledgeBase {
     this._loadingPromise = null;
     this._tagIndex = {};
     this._domainIndex = {};
+    // Workspace partitioning indexes
+    this._workspaceIndex = {};
+    this._milestoneIndex = {};
+    this._categoryIndex = {};
   }
 
   // ============================================================
@@ -36,6 +40,16 @@ class KnowledgeBase {
           this.rules = data.cobra_kb_rules || [];
           this.operativePrompts = data.cobra_operative_prompts || [];
         }
+        // Migration: rules legacy senza workspace_id → set default
+        this.rules = this.rules.map(r => {
+          if (!r.workspace_id) r.workspace_id = 'generic';
+          if (!r.tier) r.tier = 'hot';
+          if (r.confirmCount === undefined) r.confirmCount = 0;
+          if (!r.category) r.category = 'regola';
+          if (!r.entities) r.entities = [];
+          if (!r.keywords_extra) r.keywords_extra = [];
+          return r;
+        });
         this._buildIndices();
         this._loaded = true;
         this._loadingPromise = null;
@@ -91,6 +105,12 @@ class KnowledgeBase {
     tags = [],
     metadata = {},
     sourceJobId = null,
+    workspace_id = 'generic',  // Workspace partition
+    tier = 'hot',              // 'milestone' | 'hot' | 'cold'
+    confirmCount = 0,
+    category = 'regola',       // 'cliente' | 'processo' | 'eccezione' | 'regola' | 'template'
+    entities = [],
+    keywords_extra = [],
   }) {
     // Validation: reject if title or content is empty/null
     if (!title || typeof title !== 'string' || !title.trim()) {
@@ -117,6 +137,12 @@ class KnowledgeBase {
       tags,
       metadata,
       sourceJobId,
+      workspace_id,
+      tier,
+      confirmCount,
+      category,
+      entities,
+      keywords_extra,
       isActive: true,
       version: existing >= 0 ? (this.rules[existing].version || 0) + 1 : 1,
       previousContent: existing >= 0 ? this.rules[existing].content : null,
@@ -126,6 +152,7 @@ class KnowledgeBase {
       usageCount: existing >= 0 ? this.rules[existing].usageCount : 0,
       failureCount: existing >= 0 ? this.rules[existing].failureCount : 0,
       lastUsedAt: existing >= 0 ? this.rules[existing].lastUsedAt : null,
+      useCount: existing >= 0 ? (this.rules[existing].useCount || 0) : 0,
     };
 
     if (existing >= 0) {
@@ -267,16 +294,34 @@ class KnowledgeBase {
   _buildIndices() {
     this._tagIndex = {};
     this._domainIndex = {};
+    this._workspaceIndex = {};
+    this._milestoneIndex = {};
+    this._categoryIndex = {};
     this.rules.forEach(r => {
       if (r.isActive) {
+        // Tag index
         (r.tags || []).forEach(tag => {
           if (!this._tagIndex[tag]) this._tagIndex[tag] = [];
           if (!this._tagIndex[tag].includes(r.id)) this._tagIndex[tag].push(r.id);
         });
+        // Domain index
         if (r.domain) {
           if (!this._domainIndex[r.domain]) this._domainIndex[r.domain] = [];
           if (!this._domainIndex[r.domain].includes(r.id)) this._domainIndex[r.domain].push(r.id);
         }
+        // Workspace index
+        const ws = r.workspace_id || 'generic';
+        if (!this._workspaceIndex[ws]) this._workspaceIndex[ws] = [];
+        if (!this._workspaceIndex[ws].includes(r.id)) this._workspaceIndex[ws].push(r.id);
+        // Milestone index
+        if (r.tier === 'milestone') {
+          if (!this._milestoneIndex[ws]) this._milestoneIndex[ws] = [];
+          if (!this._milestoneIndex[ws].includes(r.id)) this._milestoneIndex[ws].push(r.id);
+        }
+        // Category index
+        const cat = r.category || 'regola';
+        if (!this._categoryIndex[cat]) this._categoryIndex[cat] = [];
+        if (!this._categoryIndex[cat].includes(r.id)) this._categoryIndex[cat].push(r.id);
       }
     });
   }
@@ -291,6 +336,19 @@ class KnowledgeBase {
         if (!this._domainIndex[rule.domain]) this._domainIndex[rule.domain] = [];
         if (!this._domainIndex[rule.domain].includes(rule.id)) this._domainIndex[rule.domain].push(rule.id);
       }
+      // Workspace index
+      const ws = rule.workspace_id || 'generic';
+      if (!this._workspaceIndex[ws]) this._workspaceIndex[ws] = [];
+      if (!this._workspaceIndex[ws].includes(rule.id)) this._workspaceIndex[ws].push(rule.id);
+      // Milestone index
+      if (rule.tier === 'milestone') {
+        if (!this._milestoneIndex[ws]) this._milestoneIndex[ws] = [];
+        if (!this._milestoneIndex[ws].includes(rule.id)) this._milestoneIndex[ws].push(rule.id);
+      }
+      // Category index
+      const cat = rule.category || 'regola';
+      if (!this._categoryIndex[cat]) this._categoryIndex[cat] = [];
+      if (!this._categoryIndex[cat].includes(rule.id)) this._categoryIndex[cat].push(rule.id);
     }
   }
 
@@ -302,6 +360,20 @@ class KnowledgeBase {
     });
     if (rule.domain && this._domainIndex[rule.domain]) {
       this._domainIndex[rule.domain] = this._domainIndex[rule.domain].filter(id => id !== rule.id);
+    }
+    // Workspace index
+    const ws = rule.workspace_id || 'generic';
+    if (this._workspaceIndex[ws]) {
+      this._workspaceIndex[ws] = this._workspaceIndex[ws].filter(id => id !== rule.id);
+    }
+    // Milestone index
+    if (this._milestoneIndex[ws]) {
+      this._milestoneIndex[ws] = this._milestoneIndex[ws].filter(id => id !== rule.id);
+    }
+    // Category index
+    const cat = rule.category || 'regola';
+    if (this._categoryIndex[cat]) {
+      this._categoryIndex[cat] = this._categoryIndex[cat].filter(id => id !== rule.id);
     }
   }
 
@@ -381,6 +453,192 @@ class KnowledgeBase {
       priority: 5,
       tags: ['preference', key],
     });
+  }
+
+  // ============================================================
+  // WORKSPACE PARTITION & AUTO-TAGGING
+  // ============================================================
+
+  detectWorkspace(message) {
+    const msg = (message || '').toLowerCase();
+    const keywords = {
+      fatturazione: ['fattura', 'fatturazione', 'iva', 'scadenza', 'pagamento', 'fatturato', 'invoice'],
+      credito: ['credito', 'insoluto', 'sollecito', 'moroso', 'debito', 'recovery', 'collection'],
+      pricing: ['prezzo', 'listino', 'sconto', 'margine', 'pricing', 'tariff', 'preventivo'],
+      commerciale: ['lead', 'offerta', 'cliente nuovo', 'trattativa', 'prospetto', 'commercial'],
+    };
+
+    // Track best match
+    let bestWs = 'generic';
+    let bestScore = 0;
+
+    for (const [wsId, kwords] of Object.entries(keywords)) {
+      const matches = kwords.filter(k => {
+        // Use word boundary matching for single words
+        if (k.includes(' ')) {
+          return msg.includes(k);
+        } else {
+          return msg.match(new RegExp(`\\b${k}\\b`));
+        }
+      }).length;
+      if (matches > bestScore) {
+        bestScore = matches;
+        bestWs = wsId;
+      }
+    }
+
+    const confidence = bestScore > 0 ? Math.min(100, bestScore * 25) : 0;
+    return { workspaceId: bestWs, confidence };
+  }
+
+  getWorkspaceContext(workspaceId) {
+    const wsId = workspaceId || 'generic';
+    const ruleIds = this._workspaceIndex[wsId] || [];
+    const milestoneIds = this._milestoneIndex[wsId] || [];
+
+    const rules = ruleIds.map(id => this.rules.find(r => r.id === id)).filter(Boolean);
+    const milestones = milestoneIds.map(id => this.rules.find(r => r.id === id)).filter(Boolean);
+    const hotRules = rules.filter(r => r.tier === 'hot' && r.isActive).slice(0, 5);
+    const prompts = this.findOperativePrompt({ tags: [wsId] });
+
+    return {
+      workspace: wsId,
+      guide: {
+        milestones: milestones.map(r => ({ id: r.id, title: r.title, content: r.content })),
+        hotRules: hotRules.map(r => ({ id: r.id, title: r.title, content: r.content })),
+      },
+      operativePrompts: prompts.slice(0, 3),
+      totalRules: rules.length,
+    };
+  }
+
+  async addRuleWithAutoTag(rule, brainInstance) {
+    // Se brainInstance disponibile, chiama AI per extract tag
+    let autoTag = { category: 'regola', entities: [], keywords_extra: [] };
+
+    if (brainInstance && typeof brainInstance.extractTags === 'function') {
+      try {
+        autoTag = await brainInstance.extractTags(rule.content);
+      } catch (e) {
+        console.warn('[KB] Auto-tag AI failed, using fallback:', e.message);
+        autoTag = this._heuristicTag(rule.content);
+      }
+    } else {
+      autoTag = this._heuristicTag(rule.content);
+    }
+
+    // Merge auto-tags nel rule
+    const enrichedRule = {
+      ...rule,
+      category: rule.category || autoTag.category,
+      entities: rule.entities || autoTag.entities,
+      keywords_extra: rule.keywords_extra || autoTag.keywords_extra,
+      workspace_id: rule.workspace_id || 'generic',
+      tier: rule.tier || 'hot',
+      confirmCount: rule.confirmCount || 0,
+    };
+
+    return this.addRule(enrichedRule);
+  }
+
+  _heuristicTag(content) {
+    const c = (content || '').toLowerCase();
+    let category = 'regola';
+    const entities = [];
+    const keywords_extra = [];
+
+    if (c.includes('cliente') || c.includes('customer')) category = 'cliente';
+    else if (c.includes('processo') || c.includes('process')) category = 'processo';
+    else if (c.includes('eccezione') || c.includes('exception')) category = 'eccezione';
+    else if (c.includes('template')) category = 'template';
+
+    const entityMatch = c.match(/cliente[:\s]+(\w+)/gi);
+    if (entityMatch) entities.push(...entityMatch.map(e => e.split(/[:\s]+/)[1]));
+
+    const words = c.split(/\s+/).slice(0, 20);
+    keywords_extra.push(...words.filter(w => w.length > 4).slice(0, 5));
+
+    return { category, entities, keywords_extra };
+  }
+
+  confirmRule(ruleId) {
+    const rule = this.rules.find(r => r.id === ruleId);
+    if (!rule) return;
+
+    rule.confirmCount = (rule.confirmCount || 0) + 1;
+    rule.lastUsedAt = new Date().toISOString();
+
+    // Promozione: confirmCount >= 2 e tier='hot' → 'milestone'
+    if (rule.confirmCount >= 2 && rule.tier === 'hot') {
+      rule.tier = 'milestone';
+      // Rebuild milestone index
+      const ws = rule.workspace_id || 'generic';
+      if (!this._milestoneIndex[ws]) this._milestoneIndex[ws] = [];
+      if (!this._milestoneIndex[ws].includes(rule.id)) {
+        this._milestoneIndex[ws].push(rule.id);
+      }
+    }
+
+    this._scheduleSave();
+  }
+
+  markRuleUsed(ruleId) {
+    const rule = this.rules.find(r => r.id === ruleId);
+    if (rule) {
+      rule.useCount = (rule.useCount || 0) + 1;
+      rule.lastUsedAt = new Date().toISOString();
+      this._scheduleSave();
+    }
+  }
+
+  decayColdRules() {
+    const now = Date.now();
+    const threshold = 90 * 24 * 60 * 60 * 1000; // 90 giorni
+    let decayed = 0;
+
+    this.rules.forEach(r => {
+      if (!r.isActive || r.tier !== 'hot') return;
+      if (!r.lastUsedAt) return;
+
+      const daysSinceUse = (now - new Date(r.lastUsedAt).getTime()) / (24 * 60 * 60 * 1000);
+      if (daysSinceUse > 90) {
+        r.tier = 'cold';
+        decayed++;
+      }
+    });
+
+    if (decayed > 0) {
+      this._buildIndices();
+      this._scheduleSave();
+    }
+    return decayed;
+  }
+
+  searchByTags(tags, workspaceId) {
+    if (!tags || tags.length === 0) return [];
+    const wsId = workspaceId;
+    let wsRuleIds = [];
+
+    // If workspace specified, filter to that workspace
+    if (wsId) {
+      wsRuleIds = this._workspaceIndex[wsId] || [];
+    }
+
+    const results = [];
+    tags.forEach(tag => {
+      const tagRuleIds = this._tagIndex[tag] || [];
+      tagRuleIds.forEach(id => {
+        // If workspace specified, only include rules from that workspace
+        if (wsId && !wsRuleIds.includes(id)) return;
+
+        if (!results.some(r => r.id === id)) {
+          const rule = this.rules.find(r => r.id === id);
+          if (rule && rule.isActive) results.push(rule);
+        }
+      });
+    });
+
+    return results.sort((a, b) => (b.score || 0) - (a.score || 0));
   }
 
   // ============================================================

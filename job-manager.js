@@ -714,3 +714,13 @@ const aiEngine = new AIConversationEngine(jobManager);
   // Cleanup stale jobs on startup
   await jobManager.cleanupStaleJobs();
 })();
+
+// Export to self (MV3 compatible)
+if (typeof self !== 'undefined') {
+  self.JobManager = JobManager;
+  self.PipelineOrchestrator = PipelineOrchestrator;
+  self.AIConversationEngine = AIConversationEngine;
+  self.jobManager = jobManager;
+  self.pipelineOrchestrator = pipelineOrchestrator;
+  self.aiEngine = aiEngine;
+}

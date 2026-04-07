@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+icons/
+bridge/
+*.min.js
+*.png
+*.gif
+*.crx
+*.pem

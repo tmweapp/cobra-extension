@@ -4,8 +4,8 @@
 
 const ElevenLabs = (() => {
   const API_BASE = 'https://api.elevenlabs.io/v1';
-  let _config = {
-    apiKey: 'sk_a62bbdb3b474fad9df5f621bdb85aca47d2153a5b6e3541f',
+  const _config = {
+    apiKey: '',
     defaultVoiceId: 'uScy1bXtKz8vPzfdFsFw',
     defaultModel: 'eleven_multilingual_v2',
     stability: 0.5,

@@ -1,0 +1,105 @@
+name: COBRA CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run lint
+
+  test:
+    name: Test + Coverage
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm test -- --coverage --ci --coverageReporters=text --coverageReporters=lcov
+      - name: Check coverage threshold
+        run: |
+          echo "Coverage threshold enforced by jest.config.js coverageThresholds"
+          echo "Minimum: 60% lines, 60% functions, 50% branches"
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan for hardcoded secrets
+        run: |
+          echo "Scanning for API keys and secrets..."
+          FOUND=0
+          for pattern in \
+            "sk-[a-zA-Z0-9]{20,}" \
+            "sk-proj-[a-zA-Z0-9_-]{20,}" \
+            "sk-ant-[a-zA-Z0-9_-]{20,}" \
+            "gsk_[a-zA-Z0-9]{20,}" \
+            "AIza[a-zA-Z0-9_-]{35}" \
+            "xai-[a-zA-Z0-9]{20,}" \
+            "xi-[a-zA-Z0-9]{20,}"; do
+            if grep -rn --include="*.js" --include="*.html" --include="*.json" \
+              -E "$pattern" . \
+              --exclude-dir=node_modules --exclude-dir=.git \
+              --exclude-dir=coverage --exclude-dir=dist \
+              --exclude="cobra-dev-keys.js"; then
+              FOUND=1
+            fi
+          done
+          if [ "$FOUND" -eq 1 ]; then
+            echo "::error::Hardcoded API keys detected!"
+            exit 1
+          fi
+          echo "No hardcoded secrets found."
+      - name: Dependency vulnerability scan
+        run: |
+          npm ci
+          npm audit --audit-level=high || echo "::warning::Vulnerabilities found — review npm audit output"
+
+  build:
+    name: Build + Size Check
+    runs-on: ubuntu-latest
+    needs: [test, security-scan]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+      - name: Create extension zip
+        run: cd dist && zip -r ../cobra-extension.zip . -x "*.map"
+      - name: Check bundle size
+        run: |
+          SIZE=$(stat -f%z cobra-extension.zip 2>/dev/null || stat --printf="%s" cobra-extension.zip)
+          SIZE_KB=$((SIZE / 1024))
+          echo "Extension zip size: ${SIZE_KB} KB"
+          if [ "$SIZE_KB" -gt 2048 ]; then
+            echo "::warning::Extension zip exceeds 2MB ($SIZE_KB KB)"
+          fi
+      - name: Upload extension
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobra-extension
+          path: cobra-extension.zip

@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>COBRA — The Magazine</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B0B0F;--bg-2:#13131A;--bg-3:#1C1C26;
+  --ink:#F5F5F7;--ink-2:#A8A8B0;--ink-3:#6B6B78;
+  --accent:#FF6B35;--accent-2:#F7B538;
+  --cyan:#52E5E7;--violet:#9B7AFE;--pink:#FF6EC4;
+  --grad-1:linear-gradient(135deg,#FF6B35 0%,#F7B538 50%,#FFD700 100%);
+  --grad-2:linear-gradient(135deg,#9B7AFE 0%,#52E5E7 100%);
+  --grad-3:linear-gradient(135deg,#FF6EC4 0%,#9B7AFE 50%,#52E5E7 100%);
+  --grad-dark:linear-gradient(180deg,#0B0B0F 0%,#1C1C26 100%);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.serif{font-family:'Fraunces',serif}
+.mono{font-family:'JetBrains Mono',monospace}
+
+/* Navigation */
+.nav-top{position:fixed;top:0;left:0;right:0;z-index:100;padding:24px 48px;display:flex;justify-content:space-between;align-items:center;backdrop-filter:blur(20px);background:rgba(11,11,15,0.6);border-bottom:1px solid rgba(255,255,255,0.06)}
+.nav-brand{font-family:'Fraunces',serif;font-weight:700;font-size:22px;letter-spacing:-0.02em;display:flex;align-items:center;gap:12px}
+.nav-brand-mark{width:36px;height:36px;background:var(--grad-1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--bg)}
+.nav-links{display:flex;gap:32px}
+.nav-link{color:var(--ink-2);text-decoration:none;font-size:13px;font-weight:500;transition:color 0.2s}
+.nav-link:hover{color:var(--accent)}
+.nav-cta{padding:10px 22px;background:var(--grad-1);color:var(--bg);border:none;border-radius:30px;font-weight:600;font-size:13px;cursor:pointer}
+
+/* Hero / Cover */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:120px 48px 80px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-200px;right:-200px;width:800px;height:800px;background:var(--grad-3);border-radius:50%;filter:blur(120px);opacity:0.3}
+.hero::after{content:'';position:absolute;bottom:-300px;left:-200px;width:700px;height:700px;background:var(--grad-1);border-radius:50%;filter:blur(140px);opacity:0.25}
+.hero-content{position:relative;max-width:1400px;margin:0 auto;width:100%}
+.hero-eyebrow{display:inline-block;padding:8px 18px;background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.3);border-radius:30px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:0.15em;margin-bottom:32px}
+.hero-title{font-family:'Fraunces',serif;font-size:clamp(72px,11vw,180px);font-weight:500;line-height:0.9;letter-spacing:-0.04em;margin-bottom:32px}
+.hero-title .italic{font-style:italic;font-weight:400;background:var(--grad-3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-subtitle{font-size:24px;color:var(--ink-2);max-width:680px;line-height:1.5;margin-bottom:48px;font-weight:300}
+.hero-meta{display:flex;gap:48px;padding-top:32px;border-top:1px solid rgba(255,255,255,0.08)}
+.meta-item{display:flex;flex-direction:column;gap:4px}
+.meta-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.15em}
+.meta-value{font-family:'Fraunces',serif;font-size:24px;font-weight:600}
+
+/* Section base */
+.section{padding:120px 48px;position:relative}
+.container{max-width:1400px;margin:0 auto}
+.section-eyebrow{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:0.2em;margin-bottom:18px;padding:6px 14px;background:rgba(255,107,53,0.08);border-radius:20px}
+.section-title{font-family:'Fraunces',serif;font-size:clamp(48px,7vw,96px);font-weight:500;line-height:1;letter-spacing:-0.03em;margin-bottom:24px}
+.section-title .italic{font-style:italic;font-weight:400}
+.section-lead{font-size:22px;color:var(--ink-2);max-width:720px;line-height:1.5;font-weight:300;margin-bottom:64px}
+
+/* Philosophy */
+.philosophy{background:var(--bg-2);position:relative;overflow:hidden}
+.philosophy::before{content:'"';position:absolute;top:60px;right:80px;font-family:'Fraunces',serif;font-size:600px;color:rgba(255,107,53,0.04);line-height:0.7;font-weight:900}
+.phil-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;position:relative}
+.phil-quote{font-family:'Fraunces',serif;font-size:42px;line-height:1.2;font-weight:500;letter-spacing:-0.02em}
+.phil-quote em{font-style:italic;color:var(--accent)}
+.phil-author{margin-top:32px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.15em}
+.phil-text p{font-size:17px;color:var(--ink-2);margin-bottom:20px;line-height:1.7}
+.phil-text p strong{color:var(--ink);font-weight:600}
+
+/* Magazine grid for screenshots */
+.screenshots{padding:120px 48px;background:var(--bg)}
+.shot-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:24px;margin-top:48px}
+.shot{position:relative;border-radius:24px;overflow:hidden;background:var(--bg-2);border:1px solid rgba(255,255,255,0.08);transition:all 0.4s;cursor:pointer}
+.shot:hover{transform:translateY(-8px);box-shadow:0 32px 80px rgba(0,0,0,0.5);border-color:var(--accent)}
+.shot-large{grid-column:span 8}
+.shot-small{grid-column:span 4}
+.shot-half{grid-column:span 6}
+.shot-third{grid-column:span 4}
+.shot-frame{aspect-ratio:16/10;background:var(--grad-dark);position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.shot-frame iframe{width:140%;height:140%;border:none;transform:scale(0.7);transform-origin:top left;pointer-events:none;background:var(--bg)}
+.shot-info{padding:24px 28px;border-top:1px solid rgba(255,255,255,0.06)}
+.shot-tag{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:0.15em;margin-bottom:8px}
+.shot-title{font-family:'Fraunces',serif;font-size:24px;font-weight:600;letter-spacing:-0.01em;margin-bottom:6px}
+.shot-desc{font-size:14px;color:var(--ink-2);line-height:1.5}
+.shot-overlay-link{position:absolute;top:16px;right:16px;width:42px;height:42px;background:rgba(255,255,255,0.95);color:var(--bg);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;text-decoration:none;z-index:5;backdrop-filter:blur(10px);transition:transform 0.3s}
+.shot:hover .shot-overlay-link{transform:rotate(-45deg) scale(1.1)}
+
+/* Architecture */
+.architecture{background:var(--bg-2);padding:120px 48px}
+.arch-flow{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-top:64px;position:relative}
+.arch-card{padding:36px 28px;background:var(--bg-3);border:1px solid rgba(255,255,255,0.08);border-radius:24px;position:relative;transition:all 0.3s}
+.arch-card:hover{border-color:var(--accent);transform:translateY(-6px)}
+.arch-num{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:700;letter-spacing:0.1em;margin-bottom:12px}
+.arch-icon{font-size:36px;margin-bottom:18px;display:block}
+.arch-title{font-family:'Fraunces',serif;font-size:24px;font-weight:600;margin-bottom:10px;letter-spacing:-0.01em}
+.arch-desc{font-size:14px;color:var(--ink-2);line-height:1.6}
+
+/* Benefits */
+.benefits{padding:120px 48px;background:var(--bg)}
+.bene-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:32px;margin-top:64px}
+.bene{padding:48px;background:var(--bg-2);border:1px solid rgba(255,255,255,0.08);border-radius:32px;position:relative;overflow:hidden;transition:all 0.4s}
+.bene::before{content:'';position:absolute;top:-50%;right:-50%;width:200px;height:200px;border-radius:50%;background:var(--grad-1);filter:blur(80px);opacity:0;transition:opacity 0.4s}
+.bene:hover::before{opacity:0.4}
+.bene:hover{transform:translateY(-6px);border-color:rgba(255,107,53,0.3)}
+.bene-num{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:700;letter-spacing:0.15em;margin-bottom:16px;position:relative}
+.bene-title{font-family:'Fraunces',serif;font-size:36px;font-weight:600;line-height:1.1;letter-spacing:-0.02em;margin-bottom:18px;position:relative}
+.bene-text{font-size:16px;color:var(--ink-2);line-height:1.7;position:relative}
+.bene-text strong{color:var(--ink);font-weight:600}
+
+/* Numbers section */
+.numbers{padding:120px 48px;background:var(--grad-dark);position:relative;overflow:hidden}
+.numbers::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(255,107,53,0.1) 0%,transparent 70%)}
+.num-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;margin-top:64px;position:relative}
+.num-item{text-align:center;padding:48px 24px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:24px;backdrop-filter:blur(10px)}
+.num-value{font-family:'Fraunces',serif;font-size:88px;font-weight:600;line-height:1;letter-spacing:-0.04em;background:var(--grad-1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px}
+.num-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-2);text-transform:uppercase;letter-spacing:0.15em}
+.num-desc{font-size:13px;color:var(--ink-3);margin-top:10px;line-height:1.5}
+
+/* Themes showcase */
+.themes-show{padding:120px 48px;background:var(--bg-2)}
+.themes-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;margin-top:64px}
+.theme-card{background:var(--bg-3);border:1px solid rgba(255,255,255,0.08);border-radius:28px;overflow:hidden;transition:all 0.4s;cursor:pointer;text-decoration:none;color:inherit}
+.theme-card:hover{transform:translateY(-12px);box-shadow:0 40px 100px rgba(0,0,0,0.6)}
+.theme-preview{aspect-ratio:16/10;position:relative;overflow:hidden}
+.theme-aurora-prev{background:linear-gradient(135deg,#070815 0%,#1a1f3d 50%,#2d1b4e 100%);position:relative}
+.theme-aurora-prev::after{content:'AURORA';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:54px;font-weight:700;background:linear-gradient(135deg,#52bbff,#9382ff,#ff6ec4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-0.02em}
+.theme-linen-prev{background:linear-gradient(135deg,#FBF8F4 0%,#F0E5D0 100%);position:relative}
+.theme-linen-prev::after{content:'Linen';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-style:italic;font-size:64px;font-weight:500;color:#C44536;letter-spacing:-0.03em}
+.theme-carbon-prev{background:#0A0A0A;position:relative;border-bottom:4px solid #FFD700}
+.theme-carbon-prev::after{content:'CARBON';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:48px;font-weight:700;color:#FFD700;letter-spacing:0.1em}
+.theme-info{padding:32px}
+.theme-name{font-family:'Fraunces',serif;font-size:28px;font-weight:600;letter-spacing:-0.02em;margin-bottom:8px}
+.theme-tagline{font-size:14px;color:var(--ink-2);margin-bottom:18px;line-height:1.6}
+.theme-tags{display:flex;flex-wrap:wrap;gap:8px}
+.theme-tag{padding:5px 12px;background:rgba(255,107,53,0.1);color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:10px;border-radius:20px;text-transform:uppercase;letter-spacing:0.05em}
+
+/* Closing */
+.closing{padding:160px 48px;text-align:center;position:relative;overflow:hidden}
+.closing::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:1200px;height:1200px;background:var(--grad-3);border-radius:50%;filter:blur(180px);opacity:0.15}
+.closing-content{position:relative;max-width:900px;margin:0 auto}
+.closing-title{font-family:'Fraunces',serif;font-size:clamp(56px,9vw,140px);font-weight:500;line-height:0.95;letter-spacing:-0.04em;margin-bottom:32px}
+.closing-title em{font-style:italic;background:var(--grad-3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.closing-sub{font-size:22px;color:var(--ink-2);max-width:640px;margin:0 auto 48px;line-height:1.5;font-weight:300}
+.closing-cta{display:inline-flex;align-items:center;gap:14px;padding:20px 40px;background:var(--grad-1);color:var(--bg);border:none;border-radius:60px;font-weight:700;font-size:16px;cursor:pointer;text-decoration:none;transition:all 0.3s}
+.closing-cta:hover{transform:translateY(-4px);box-shadow:0 24px 60px rgba(255,107,53,0.4)}
+.footer{padding:48px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;color:var(--ink-3);font-size:13px;font-family:'JetBrains Mono',monospace}
+
+@media (max-width:900px){
+  .phil-grid,.bene-grid,.themes-grid,.num-grid{grid-template-columns:1fr}
+  .arch-flow{grid-template-columns:1fr 1fr}
+  .shot-large,.shot-small,.shot-half,.shot-third{grid-column:span 12}
+  .nav-links{display:none}
+  .section{padding:80px 24px}
+  .hero{padding:120px 24px 60px}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav-top">
+  <div class="nav-brand"><div class="nav-brand-mark">C</div>COBRA</div>
+  <div class="nav-links">
+    <a href="#philosophy" class="nav-link">Filosofia</a>
+    <a href="#architecture" class="nav-link">Architettura</a>
+    <a href="#screens" class="nav-link">Interfaccia</a>
+    <a href="#themes" class="nav-link">Temi</a>
+    <a href="#benefits" class="nav-link">Vantaggi</a>
+  </div>
+  <a href="#themes" class="nav-cta">Esplora →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-content">
+    <span class="hero-eyebrow">★ Issue 01 · Aprile 2026 · The Cognitive Workspace</span>
+    <h1 class="hero-title">Pensa<br>come <span class="italic">tu</span>.<br>Lavora<br>per <span class="italic">te</span>.</h1>
+    <p class="hero-subtitle">COBRA è l'assistente cognitivo che impara dal tuo modo di lavorare. Una memoria a quattro livelli, agenti specializzati, e un briefing che ogni mattina sa già cosa serve davvero.</p>
+    <div class="hero-meta">
+      <div class="meta-item"><div class="meta-label">VERSION</div><div class="meta-value">v5.2</div></div>
+      <div class="meta-item"><div class="meta-label">CODENAME</div><div class="meta-value">Cobra</div></div>
+      <div class="meta-item"><div class="meta-label">STATUS</div><div class="meta-value">Production</div></div>
+      <div class="meta-item"><div class="meta-label">SCORE</div><div class="meta-value">100/100</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PHILOSOPHY -->
+<section class="section philosophy" id="philosophy">
+  <div class="container">
+    <span class="section-eyebrow">// Filosofia</span>
+    <h2 class="section-title">Non un chatbot.<br><span class="italic">Un collega.</span></h2>
+    <p class="section-lead">Gli assistenti AI dimenticano. Cobra ricorda. Ogni conversazione costruisce sapere, ogni decisione diventa regola, ogni cliente diventa profilo. È memoria che si stratifica, non chat che si dimentica.</p>
+    <div class="phil-grid">
+      <div>
+        <p class="phil-quote">"L'intelligenza non è generare token. È <em>sapere cosa è già stato deciso</em> e perché."</p>
+        <p class="phil-author">— Manifesto Cobra, 2026</p>
+      </div>
+      <div class="phil-text">
+        <p><strong>Workspace partition.</strong> Fatturazione, credito, commerciale, pricing — ognuno ha la sua memoria isolata. Non confondere mai i contesti.</p>
+        <p><strong>Memoria a 4 livelli.</strong> Working, Hot, Milestone, Cold. Le regole importanti emergono naturalmente dall'uso ripetuto.</p>
+        <p><strong>Briefing ogni mattina.</strong> Il sistema legge la knowledge base del workspace attivo e ti prepara il contesto. È il primo prompt che l'AI vedrà.</p>
+        <p><strong>Reasoning trace.</strong> Vedi sempre perché Cobra ha deciso così. Niente scatola nera.</p>
+        <p><strong>3-tier response.</strong> Sintetico, riassunto, completo — nello stesso JSON. Tu scegli quanta profondità vuoi vedere.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section class="section architecture" id="architecture">
+  <div class="container">
+    <span class="section-eyebrow">// Architettura</span>
+    <h2 class="section-title">Quattro livelli<br>di <span class="italic">memoria viva</span>.</h2>
+    <p class="section-lead">Un'idea semplice: non tutto merita di essere ricordato per sempre, ma quello che funziona deve emergere automaticamente. La memoria si stratifica con l'uso.</p>
+    <div class="arch-flow">
+      <div class="arch-card">
+        <div class="arch-num">01 / WORKING</div>
+        <span class="arch-icon">⚡</span>
+        <h3 class="arch-title">Finestra attiva</h3>
+        <p class="arch-desc">5 messaggi recenti + 5 di contesto rolling. L'AI vede sempre l'ultimo turno con perfetta lucidità.</p>
+      </div>
+      <div class="arch-card">
+        <div class="arch-num">02 / HOT</div>
+        <span class="arch-icon">🔥</span>
+        <h3 class="arch-title">Sapere ricorrente</h3>
+        <p class="arch-desc">Fatti usati spesso negli ultimi 30 giorni. Profili clienti, regole operative, abitudini.</p>
+      </div>
+      <div class="arch-card">
+        <div class="arch-num">03 / MILESTONE</div>
+        <span class="arch-icon">★</span>
+        <h3 class="arch-title">Regole d'oro</h3>
+        <p class="arch-desc">Promosse automaticamente dopo 10+ riusi, o flaggate manualmente. Iniettate in ogni prompt.</p>
+      </div>
+      <div class="arch-card">
+        <div class="arch-num">04 / COLD</div>
+        <span class="arch-icon">❄</span>
+        <h3 class="arch-title">Biblioteca remota</h3>
+        <p class="arch-desc">Consolidamento illimitato per livelli. L'AI non legge tutto: tag, categorie, keyword → 20 righe per query.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCREENSHOTS -->
+<section class="screenshots" id="screens">
+  <div class="container">
+    <span class="section-eyebrow">// Interfaccia</span>
+    <h2 class="section-title">Dodici sezioni.<br><span class="italic">Una sola mente.</span></h2>
+    <p class="section-lead">Ogni pagina è pensata per un momento del lavoro quotidiano. Click per esplorare i prototipi reali.</p>
+
+    <div class="shot-grid">
+      <div class="shot shot-large">
+        <a href="aurora.html" class="shot-overlay-link" target="_blank">↗</a>
+        <div class="shot-frame"><iframe src="aurora.html" loading="lazy"></iframe></div>
+        <div class="shot-info">
+          <div class="shot-tag">Chat · Vista principale</div>
+          <h3 class="shot-title">La conversazione che ricorda</h3>
+          <p class="shot-desc">3 agenti al lavoro in parallelo: Analyzer, Planner, Executor. Reasoning trace visibile, page-context dalla pagina aperta, 3-tier response selezionabile.</p>
+        </div>
+      </div>
+      <div class="shot shot-small">
+        <a href="aurora.html#view-briefing" class="shot-overlay-link" target="_blank">↗</a>
+        <div class="shot-frame" style="background:linear-gradient(135deg,#070815,#2d1b4e);display:flex;align-items:center;justify-content:center"><span style="font-family:'Fraunces',serif;font-size:32px;font-weight:600;background:linear-gradient(135deg,#52bbff,#9382ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Briefing</span></div>
+        <div class="shot-info">
+          <div class="shot-tag">Briefing mattutino</div>
+          <h3 class="shot-title">Il primo caffè</h3>
+          <p class="shot-desc">Contesto, regole milestone, esempi recenti, attenzioni — già pronti.</p>
+        </div>
+      </div>
+
+      <div class="shot shot-third">
+        <a href="aurora.html#view-workspace" class="shot-overlay-link" target="_blank">↗</a>
+        <div class="shot-frame" style="background:radial-gradient(circle at center,#1a1f3d,#070815);display:flex;align-items:center;justify-content:center"><span style="font-size:80px">🎯</span></div>
+        <div class="shot-info"><div class="shot-tag">Workspace</div><h3 class="shot-title">Mansione attiva</h3><p class="shot-desc">Auto-detection del contesto. Memoria isolata per ogni partizione di lavoro.</p></div>
+      </div>
+      <div class="shot shot-third">
+        <a href="aurora.html#view-archivio" class="shot-overlay-link" target="_blank">↗</a>
+        <div class="shot-frame" style="background:linear-gradient(180deg,#13131a,#070815);display:flex;align-items:center;justify-content:center"><span style="font-size:80px">🗄️</span></div>
+        <div class="shot-info"><div class="shot-tag">Archivio · 6 sub-tabs</div><h3 class="shot-title">Memoria a 4 tier</h3><p class="shot-desc">Memoria, prompts, KB, jobs, files, cronologia. Tutto in un posto.</p></div>
+      </div>
+      <div class="shot shot-third">
+        <a href="aurora.html#view-library" class="shot-overlay-link" target="_blank">↗</a>
+        <div class="shot-frame" style="background:linear-gradient(135deg,#2d1b4e,#070815);display:flex;align-items:center;justify-content:center"><span style="font-size:80px">📚</span></div>
+        <div class="shot-info"><div class="shot-tag">Biblioteca</div><h3 class="shot-title">Consolidamento illimitato</h3><p class="shot-desc">Livelli infiniti, ricerca per tag. Mai un context bloat.</p></div>
+      </div>
+
+      <div class="shot shot-half">
+        <a href="aurora.html#view-milestones" class="shot-overlay-link" target="_blank">↗</a>
+        <div class="shot-frame" style="background:linear-gradient(135deg,#070815,#1a1f3d);display:flex;align-items:center;justify-content:center"><span style="font-size:96px">⭐</span></div>
+        <div class="shot-info"><div class="shot-tag">Milestones</div><h3 class="shot-title">Le regole che contano</h3><p class="shot-desc">Promozione automatica con reuse &gt;10x. Iniettate in ogni prompt sistema.</p></div>
+      </div>
+      <div class="shot shot-half">
+        <a href="aurora.html#view-comms" class="shot-overlay-link" target="_blank">↗</a>
+        <div class="shot-frame" style="background:linear-gradient(135deg,#1a1f3d,#2d1b4e);display:flex;align-items:center;justify-content:center"><span style="font-size:96px">📡</span></div>
+        <div class="shot-info"><div class="shot-tag">Canali</div><h3 class="shot-title">Email · WhatsApp · LinkedIn</h3><p class="shot-desc">Outbound con conferma, inbound auto-classificato per workspace.</p></div>
+      </div>
+
+      <div class="shot shot-third">
+        <a href="aurora.html#view-ai" class="shot-overlay-link" target="_blank">↗</a>
+        <div class="shot-frame" style="background:#070815;display:flex;align-items:center;justify-content:center"><span style="font-size:80px">🧠</span></div>
+        <div class="shot-info"><div class="shot-tag">AI Settings</div><h3 class="shot-title">Provider router</h3><p class="shot-desc">Fallback chain Claude → GPT → Llama locale. Confidence threshold.</p></div>
+      </div>
+      <div class="shot shot-third">
+        <a href="aurora.html#view-settings" class="shot-overlay-link" target="_blank">↗</a>
+        <div class="shot-frame" style="background:#13131a;display:flex;align-items:center;justify-content:center"><span style="font-size:80px">⚙️</span></div>
+        <div class="shot-info"><div class="shot-tag">Settings</div><h3 class="shot-title">Tool safety 3-tier</h3><p class="shot-desc">Safe / warn / blocked. Storage. Telemetria. Export.</p></div>
+      </div>
+      <div class="shot shot-third">
+        <a href="aurora.html#view-errors" class="shot-overlay-link" target="_blank">↗</a>
+        <div class="shot-frame" style="background:linear-gradient(135deg,#070815,#3d0a1a);display:flex;align-items:center;justify-content:center"><span style="font-size:80px">🛡️</span></div>
+        <div class="shot-info"><div class="shot-tag">Errors</div><h3 class="shot-title">3-tier error boundary</h3><p class="shot-desc">Recoverable, degraded, fatal. Sempre un fallback.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- THEMES -->
+<section class="themes-show" id="themes">
+  <div class="container">
+    <span class="section-eyebrow">// Tre estetiche</span>
+    <h2 class="section-title">Una mente.<br><span class="italic">Tre anime.</span></h2>
+    <p class="section-lead">La stessa applicazione, la stessa memoria. Tre interpretazioni grafiche per tre tipi di operatore. Click per esplorare ognuna.</p>
+    <div class="themes-grid">
+      <a href="aurora.html" class="theme-card" target="_blank">
+        <div class="theme-preview theme-aurora-prev"></div>
+        <div class="theme-info">
+          <h3 class="theme-name">Aurora</h3>
+          <p class="theme-tagline">Glassmorphism scuro, gradienti cyan-violet-pink, vibe futuristica. Per chi ama il dark mode con personalità.</p>
+          <div class="theme-tags"><span class="theme-tag">Dark</span><span class="theme-tag">Glass</span><span class="theme-tag">Gradient</span></div>
+        </div>
+      </a>
+      <a href="linen.html" class="theme-card" target="_blank">
+        <div class="theme-preview theme-linen-prev"></div>
+        <div class="theme-info">
+          <h3 class="theme-name">Linen</h3>
+          <p class="theme-tagline">Editorial chiaro, carta fatta a mano, accenti terra e sage. Eleganza da rivista per chi lavora a lungo.</p>
+          <div class="theme-tags"><span class="theme-tag">Light</span><span class="theme-tag">Editorial</span><span class="theme-tag">Serif</span></div>
+        </div>
+      </a>
+      <a href="carbon.html" class="theme-card" target="_blank">
+        <div class="theme-preview theme-carbon-prev"></div>
+        <div class="theme-info">
+          <h3 class="theme-name">Carbon</h3>
+          <p class="theme-tagline">High-contrast monocromo, accento giallo singolo, data-dense. Vibe trader Bloomberg per chi vuole velocità.</p>
+          <div class="theme-tags"><span class="theme-tag">Mono</span><span class="theme-tag">Pro</span><span class="theme-tag">Dense</span></div>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- BENEFITS -->
+<section class="benefits" id="benefits">
+  <div class="container">
+    <span class="section-eyebrow">// Vantaggi quotidiani</span>
+    <h2 class="section-title">Ogni giorno,<br><span class="italic">un piccolo miracolo.</span></h2>
+    <p class="section-lead">Non promesse di rivoluzione. Solo cose concrete che oggi prendono ore e domani prenderanno minuti.</p>
+    <div class="bene-grid">
+      <div class="bene">
+        <div class="bene-num">01 / MATTINA</div>
+        <h3 class="bene-title">Apri Cobra. Sai già cosa fare.</h3>
+        <p class="bene-text">Il <strong>briefing automatico</strong> ha già letto la knowledge base del workspace attivo. Sa che Acme Spa ha 3 fatture insolute, che Charlie ha cambiato CFO, che Delta è in piano di rientro. Tu cominci dal punto giusto, non dal foglio bianco.</p>
+      </div>
+      <div class="bene">
+        <div class="bene-num">02 / DURANTE</div>
+        <h3 class="bene-title">Scrivi una cosa. Fatte tre.</h3>
+        <p class="bene-text">Gli <strong>agenti specializzati</strong> lavorano in parallelo: Analyzer capisce, Planner decide, Executor agisce. Ogni azione passa dal tool safety 3-tier — niente cancellazioni accidentali, niente invii non confermati.</p>
+      </div>
+      <div class="bene">
+        <div class="bene-num">03 / MEMORIA</div>
+        <h3 class="bene-title">Non spieghi mai due volte.</h3>
+        <p class="bene-text">Una regola spiegata una volta diventa <strong>milestone</strong> dopo 10 riusi. "Pharma → scadenza giorno 5", "&gt;€10k → telefono obbligatorio". Mai più ripetere il proprio modo di lavorare a un assistente smemorato.</p>
+      </div>
+      <div class="bene">
+        <div class="bene-num">04 / FIDUCIA</div>
+        <h3 class="bene-title">Vedi sempre il perché.</h3>
+        <p class="bene-text">Il <strong>reasoning trace</strong> mostra ogni passo: intent rilevato, workspace, KB consultata, tool eseguito, verifica. Se la confidence è bassa, Cobra chiede prima di agire. È un assistente, non un mistero.</p>
+      </div>
+      <div class="bene">
+        <div class="bene-num">05 / RECUPERO</div>
+        <h3 class="bene-title">Quando un provider cade.</h3>
+        <p class="bene-text">Claude API a rate limit? <strong>Fallback automatico</strong> a GPT-4. Offline? Llama locale. Il contesto si preserva, la sessione continua, l'utente non se ne accorge. Resilienza per chi non può permettersi pause.</p>
+      </div>
+      <div class="bene">
+        <div class="bene-num">06 / SERA</div>
+        <h3 class="bene-title">Il diario di sessione.</h3>
+        <p class="bene-text">A fine giornata Cobra scrive il <strong>session diary</strong>: cosa è successo, cosa è stato deciso, cosa serve domani. Domani mattina diventa il nuovo briefing. La memoria continua a crescere mentre tu dormi.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NUMBERS -->
+<section class="numbers">
+  <div class="container">
+    <span class="section-eyebrow">// I numeri</span>
+    <h2 class="section-title">Costruito per<br><span class="italic">durare.</span></h2>
+    <div class="num-grid">
+      <div class="num-item"><div class="num-value">1907</div><div class="num-label">Test passing</div><div class="num-desc">55 suite, copertura 60%+</div></div>
+      <div class="num-item"><div class="num-value">12</div><div class="num-label">Sezioni UI</div><div class="num-desc">Tutte coperte da 3 temi</div></div>
+      <div class="num-item"><div class="num-value">∞</div><div class="num-label">Livelli KB</div><div class="num-desc">Consolidamento illimitato</div></div>
+      <div class="num-item"><div class="num-value">3</div><div class="num-label">Provider</div><div class="num-desc">Claude · GPT · Llama</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CLOSING -->
+<section class="closing">
+  <div class="closing-content">
+    <h2 class="closing-title">Non è AI.<br>È <em>la tua</em><br><em>memoria,</em> amplificata.</h2>
+    <p class="closing-sub">Cobra non sostituisce il tuo modo di lavorare. Lo impara, lo ricorda, lo ripete. E ogni giorno migliora un po'.</p>
+    <a href="aurora.html" class="closing-cta">Prova Aurora →</a>
+  </div>
+</section>
+
+<footer class="footer">
+  COBRA v5.2 · Issue 01 · Aprile 2026 · Made with care
+</footer>
+
+</body>
+</html>

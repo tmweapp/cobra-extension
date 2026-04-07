@@ -720,7 +720,7 @@ class PDFBuilder {
     pdf += '0 ' + (this.objects.length + 1) + '\n';
     pdf += '0000000000 65535 f\n';
 
-    for (let offset of this.objectOffsets) {
+    for (const offset of this.objectOffsets) {
       pdf += offset.toString().padStart(10, '0') + ' 00000 n\n';
     }
 

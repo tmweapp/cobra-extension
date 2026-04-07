@@ -1,0 +1,107 @@
+name: Quality Gates
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint:
+    name: Lint & Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      - run: npm ci --legacy-peer-deps
+      - run: npm run lint
+      - run: npm run format:check
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      - run: npm ci --legacy-peer-deps
+      - run: npm run test:coverage
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
+      - name: Check coverage threshold
+        run: |
+          if [ -f coverage/coverage-summary.json ]; then
+            COVERAGE=$(node -e "console.log(Math.floor(require('./coverage/coverage-summary.json').total.lines.pct))")
+            if [ $COVERAGE -lt 70 ]; then
+              echo "Coverage $COVERAGE% is below threshold (70%)"
+              exit 1
+            fi
+          fi
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      - run: npm ci --legacy-peer-deps
+      - name: Run npm audit
+        run: npm audit --audit-level=moderate || true
+      - name: Run CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: 'javascript'
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  sbom:
+    name: Generate SBOM
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      - run: npm ci --legacy-peer-deps
+      - run: npm run sbom
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.json
+
+  bundle-size:
+    name: Bundle Size Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      - run: npm ci --legacy-peer-deps
+      - run: npm run build
+      - name: Check bundle size
+        run: |
+          MAX_SIZE=500000
+          for file in dist/*.js; do
+            SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file")
+            if [ $SIZE -gt $MAX_SIZE ]; then
+              echo "Bundle size for $file ($SIZE bytes) exceeds threshold ($MAX_SIZE bytes)"
+              exit 1
+            fi
+          done

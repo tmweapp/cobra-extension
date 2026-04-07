@@ -5,11 +5,75 @@
  */
 
 const ToolSafety = {
+  // ── Safety tier lists ──
+  WARN_ACTIONS: new Set([
+    'send_message', 'send_email', 'create_event', 'write_file',
+    'fill_form', 'click_element', 'execute_js'
+  ]),
+
+  BLOCKED_ACTIONS: new Set([
+    'delete_file', 'drop_table', 'exec_shell', 'delete_database',
+    'format_disk', 'uninstall_app', 'delete_folder_recursive'
+  ]),
+
   // Undo stack: last N tool executions with state snapshots
   _undoStack: [],
   _maxUndoSize: 10,
   // Pending preview awaiting user confirmation
   _pendingPreview: null,
+  // Pending warn confirmation (3s timeout)
+  _pendingWarn: null,
+  _warnTimeout: 3000,
+
+  // ============================================================
+  // SAFETY CLASSIFICATION (ternary)
+  // ============================================================
+
+  /**
+   * Classify tool safety into 3 tiers: 'safe', 'warn', 'blocked'
+   */
+  classify(toolName, args = {}) {
+    if (this.BLOCKED_ACTIONS.has(toolName)) {
+      return 'blocked';
+    }
+    if (this.WARN_ACTIONS.has(toolName)) {
+      return 'warn';
+    }
+    return 'safe';
+  },
+
+  /**
+   * Check if tool needs warning confirmation (3s window)
+   */
+  needsWarnConfirm(toolName) {
+    return this.classify(toolName) === 'warn';
+  },
+
+  /**
+   * Set pending warn (awaiting user confirmation before 3s timeout)
+   */
+  setPendingWarn(toolName, args, preview) {
+    this._pendingWarn = {
+      toolName,
+      args,
+      preview,
+      timestamp: Date.now(),
+      timerId: setTimeout(() => {
+        this._pendingWarn = null;
+      }, this._warnTimeout)
+    };
+    return this._pendingWarn;
+  },
+
+  /**
+   * Consume pending warn confirmation
+   */
+  consumePendingWarn() {
+    const warn = this._pendingWarn;
+    if (warn?.timerId) clearTimeout(warn.timerId);
+    this._pendingWarn = null;
+    return warn;
+  },
 
   // ============================================================
   // PRE-EXECUTION PREVIEW
@@ -20,7 +84,8 @@ const ToolSafety = {
    * Returns { action, description, risk, requiresConfirmation }
    */
   generatePreview(toolName, args) {
-    const risk = (self.TOOL_RISK_MAP && self.TOOL_RISK_MAP[toolName]) || 'safe';
+    const classification = this.classify(toolName, args);
+    const risk = (self.TOOL_RISK_MAP && self.TOOL_RISK_MAP[toolName]) || (classification === 'blocked' ? 'destructive' : 'safe');
 
     const previews = {
       navigate: () => ({
@@ -93,10 +158,11 @@ const ToolSafety = {
 
   /**
    * Check if a tool execution needs user confirmation
+   * (for backward compatibility, maps to 'warn' or 'blocked' classification)
    */
   needsConfirmation(toolName) {
-    const risk = (self.TOOL_RISK_MAP && self.TOOL_RISK_MAP[toolName]) || 'safe';
-    return risk === 'destructive';
+    const classification = this.classify(toolName);
+    return classification === 'warn' || classification === 'blocked';
   },
 
   /**

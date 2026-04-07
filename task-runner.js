@@ -240,7 +240,7 @@ const TaskRunner = {
    * Core task execution loop
    */
   async _executeTask(taskId) {
-    let task = this._tasks.get(taskId);
+    const task = this._tasks.get(taskId);
     if (!task) return;
 
     const taskStartTime = Date.now();

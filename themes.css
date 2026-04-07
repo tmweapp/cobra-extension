@@ -1,0 +1,188 @@
+/* ============================================================
+ * COBRA — Theme Overrides
+ * Tre temi che sovrascrivono le CSS var del sidepanel base:
+ *   [data-theme="aurora"]  → dark glass neon
+ *   [data-theme="linen"]   → light editorial
+ *   [data-theme="carbon"]  → mono pro data-dense
+ * ============================================================ */
+
+/* AURORA — dark glassmorphism, cyan/violet/pink (default) */
+html[data-theme="aurora"] {
+  --primary-cyan: #52BBFF;
+  --accent-purple: #9382FF;
+  --bg-dark: #070815;
+  --card-dark: #13131a;
+  --text-primary: #F5F5F7;
+  --text-secondary: #A0A3C4;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --glass-bg: rgba(19, 19, 26, 0.6);
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+html[data-theme="aurora"] body {
+  background:
+    radial-gradient(ellipse at top,rgba(82,187,255,0.12),transparent 60%),
+    radial-gradient(ellipse at bottom,rgba(255,110,196,0.08),transparent 60%),
+    var(--bg-dark);
+}
+html[data-theme="aurora"] #root {
+  background: linear-gradient(135deg, var(--bg-dark) 0%, #13131a 100%);
+}
+
+/* LINEN — light editorial, paper + terra */
+html[data-theme="linen"] {
+  --primary-cyan: #C44536;
+  --accent-purple: #7A9477;
+  --bg-dark: #FBF8F4;
+  --card-dark: #F5F0E8;
+  --text-primary: #1F2024;
+  --text-secondary: #5C5D63;
+  --border-color: rgba(31, 32, 36, 0.1);
+  --glass-bg: rgba(245, 240, 232, 0.85);
+  --shadow-sm: 0 2px 8px rgba(31, 32, 36, 0.06);
+  --shadow-md: 0 8px 24px rgba(31, 32, 36, 0.1);
+}
+html[data-theme="linen"] body {
+  background: #FBF8F4;
+  color: #1F2024;
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+html[data-theme="linen"] #root {
+  background: linear-gradient(180deg, #FBF8F4 0%, #F5F0E8 100%);
+}
+html[data-theme="linen"] .header {
+  background: rgba(251, 248, 244, 0.85);
+  backdrop-filter: blur(20px);
+}
+html[data-theme="linen"] .logo-img {
+  background: linear-gradient(135deg, #C44536, #D4956A);
+}
+html[data-theme="linen"] button,
+html[data-theme="linen"] input,
+html[data-theme="linen"] textarea,
+html[data-theme="linen"] select {
+  color: #1F2024;
+}
+
+/* CARBON — mono black, yellow accent, data-dense */
+html[data-theme="carbon"] {
+  --primary-cyan: #FFD700;
+  --accent-purple: #FFD700;
+  --bg-dark: #0A0A0A;
+  --card-dark: #111111;
+  --text-primary: #F5F5F5;
+  --text-secondary: #A8A8A8;
+  --border-color: #2A2A2A;
+  --glass-bg: #111111;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.8);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.9);
+}
+html[data-theme="carbon"] body {
+  background: #0A0A0A;
+  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  letter-spacing: 0.01em;
+}
+html[data-theme="carbon"] #root {
+  background: #0A0A0A;
+}
+html[data-theme="carbon"] .logo-img {
+  background: #FFD700;
+  color: #0A0A0A;
+  border-radius: 0;
+}
+html[data-theme="carbon"] .header {
+  background: #111111;
+  backdrop-filter: none;
+  border-bottom: 1px solid #2A2A2A;
+}
+html[data-theme="carbon"] * {
+  border-radius: 2px !important;
+}
+html[data-theme="carbon"] button,
+html[data-theme="carbon"] .btn {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+/* ============================================================
+ * THEME SWITCHER WIDGET — floating pill, works on all themes
+ * ============================================================ */
+.cobra-theme-switcher {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color);
+  border-radius: 40px;
+  z-index: 99999;
+  box-shadow: var(--shadow-md);
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+html[data-theme="carbon"] .cobra-theme-switcher {
+  border-radius: 0 !important;
+  padding: 2px;
+}
+.cobra-theme-switcher button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: none;
+  border-radius: 30px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s;
+  font-family: inherit;
+}
+html[data-theme="carbon"] .cobra-theme-switcher button {
+  border-radius: 0 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+}
+.cobra-theme-switcher button:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+html[data-theme="linen"] .cobra-theme-switcher button:hover {
+  background: rgba(31, 32, 36, 0.05);
+}
+.cobra-theme-switcher button.active {
+  color: var(--bg-dark);
+  background: var(--text-primary);
+}
+html[data-theme="aurora"] .cobra-theme-switcher button.active {
+  background: linear-gradient(120deg, #52bbff, #9382ff, #ff6ec4);
+  color: #070815;
+}
+html[data-theme="carbon"] .cobra-theme-switcher button.active {
+  background: #FFD700;
+  color: #0A0A0A;
+}
+.cobra-theme-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+html[data-theme="carbon"] .cobra-theme-dot {
+  border-radius: 0 !important;
+}
+.cobra-theme-dot.dot-aurora {
+  background: linear-gradient(135deg, #52bbff, #ff6ec4);
+}
+.cobra-theme-dot.dot-linen {
+  background: #C44536;
+}
+.cobra-theme-dot.dot-carbon {
+  background: #FFD700;
+}

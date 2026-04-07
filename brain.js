@@ -151,6 +151,78 @@ OUTPUT FORMAT:
     await this.saveConfig();
   },
 
+  /**
+   * Chiedi a Claude con risposta 3-tier (synthetic, summary, full)
+   * Usa ThreeTierResponse per parsing strutturato
+   */
+  async askWithThreeTier(userPrompt, context = {}) {
+    if (!this.config.claudeApiKey) {
+      throw new Error('API key Claude non configurata. Vai su Brain → Impostazioni.');
+    }
+
+    // Budget check
+    if (this.config.tokensUsedToday >= this.config.dailyTokenBudget) {
+      throw new Error(`Budget token giornaliero esaurito (${this.config.dailyTokenBudget}). Riprova domani.`);
+    }
+
+    // Costruisci il prompt 3-tier
+    if (typeof ThreeTierResponse === 'undefined') {
+      throw new Error('ThreeTierResponse module not loaded');
+    }
+
+    const { systemPrompt, userPrompt: enhancedPrompt } = ThreeTierResponse.buildThreeTierPrompt(
+      this.config.systemPrompt,
+      userPrompt,
+      context
+    );
+
+    const messages = [{ role: 'user', content: enhancedPrompt }];
+
+    // Calcola max tokens
+    const budgetLeft = this.config.dailyTokenBudget - this.config.tokensUsedToday;
+    const maxTokens = Math.min(this.config.claudeMaxTokens, budgetLeft);
+
+    // Chiama Claude
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': this.config.claudeApiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: this.config.claudeModel,
+        max_tokens: maxTokens,
+        system: systemPrompt,
+        messages,
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error?.message || `Claude API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const text = data.content?.[0]?.text || '';
+
+    // Track token usage
+    const tokensUsed = (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0);
+    this.config.tokensUsedToday += tokensUsed;
+    await this.saveConfig();
+
+    // Parsa la risposta 3-tier
+    const threeTier = ThreeTierResponse.parseThreeTierResponse(text);
+
+    return {
+      ...threeTier,
+      _tokensUsed: tokensUsed,
+      _totalTokensToday: this.config.tokensUsedToday,
+      _budgetRemaining: this.config.dailyTokenBudget - this.config.tokensUsedToday,
+    };
+  },
+
   // ============================================================
   // 2. THINK — Chiedi a Claude (con budget check + knowledge check)
   // ============================================================
@@ -343,6 +415,65 @@ Ogni azione: { "action": "click|type|scroll|navigate|wait|read", "selector": "..
   },
 
   // ============================================================
+  // 4b. EXTRACT TAGS (per auto-tagging KB rules)
+  // ============================================================
+  async extractTags(content) {
+    if (!this.config.claudeApiKey) {
+      throw new Error('API key Claude non configurata per extractTags');
+    }
+
+    const maxTokens = 200; // Token budget basso per task semplice
+    const prompt = `Estrai dal seguente contenuto regola COBRA:
+- category: una di [cliente, processo, eccezione, regola, template]
+- entities: lista entità nominate (clienti, prodotti, periodi)
+- keywords_extra: 3-5 parole chiave per ricerca
+
+Rispondi SOLO JSON: {category, entities, keywords_extra}
+
+Contenuto: ${content.slice(0, 500)}`;
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': this.config.claudeApiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: this.config.claudeModel,
+          max_tokens: maxTokens,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error?.message || `Claude API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const text = data.content?.[0]?.text || '';
+
+      try {
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
+        return {
+          category: parsed.category || 'regola',
+          entities: Array.isArray(parsed.entities) ? parsed.entities : [],
+          keywords_extra: Array.isArray(parsed.keywords_extra) ? parsed.keywords_extra : [],
+        };
+      } catch {
+        return { category: 'regola', entities: [], keywords_extra: [] };
+      }
+    } catch (e) {
+      console.warn('[Brain] extractTags failed:', e.message);
+      throw e;
+    }
+  },
+
+  // ============================================================
   // 5. SUPABASE SYNC
   // ============================================================
   async syncToSupabase(domain, data) {
@@ -479,9 +610,12 @@ const Library = {
           store.createIndex('tags', 'tags', { unique: false, multiEntry: true });
         } else {
           // FIX 7: Check if tags index exists before creating (for version upgrades)
-          const store = event.target.transaction.objectStore(this._storeName);
-          if (!store.indexNames.contains('tags')) {
-            store.createIndex('tags', 'tags', { unique: false, multiEntry: true });
+          const transaction = event.target.transaction;
+          if (transaction) {
+            const store = transaction.objectStore(this._storeName);
+            if (!store.indexNames.contains('tags')) {
+              store.createIndex('tags', 'tags', { unique: false, multiEntry: true });
+            }
           }
         }
       };

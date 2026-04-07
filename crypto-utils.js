@@ -46,7 +46,7 @@ const CryptoUtils = {
   // Genera o recupera la master key (basata su un ID unico per installazione)
   // master_id è equivalente a una passphrase — proteggerla come tale
   async _getMasterKey() {
-    let stored = await chrome.storage.local.get(['fs_master_id', 'fs_pbkdf2_iterations']);
+    const stored = await chrome.storage.local.get(['fs_master_id', 'fs_pbkdf2_iterations']);
 
     if (!stored.fs_master_id) {
       // Prima installazione: genera ID casuale e salva con iteration count

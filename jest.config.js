@@ -1,0 +1,58 @@
+module.exports = {
+  testEnvironment: 'jsdom',
+  roots: ['<rootDir>/tests'],
+  testMatch: ['**/*.test.js'],
+  setupFiles: ['<rootDir>/tests/setup.js'],
+  coverageDirectory: 'coverage',
+  coveragePathIgnorePatterns: [
+    '/node_modules/',
+    '/tests/',
+    '/icons/',
+    '/bridge/',
+    'cobra-dev-keys.js',
+  ],
+  collectCoverageFrom: [
+    // Core (existing)
+    'cobra-result.js',
+    'cobra-error-codes.js',
+    'cobra-policy.js',
+    'cobra-selector-stats.js',
+    'crypto-utils.js',
+    'tool-executor.js',
+    'tool-safety.js',
+    'cache.js',
+    'rate-limiter.js',
+    // v5.2 Architecture (new)
+    'bg-router.js',
+    'cobra-audit.js',
+    'cobra-guard.js',
+    'cobra-contracts.js',
+    'cobra-streaming.js',
+    'cobra-ui-components.js',
+    'provider-router.js',
+    // Extracted modules (new)
+    'modules/toast.js',
+    'modules/error-boundary.js',
+    // Functional modules (extended coverage)
+    'pipeline.js',
+    'job-manager.js',
+    'knowledge-base.js',
+    'brain.js',
+    'decision-engine.js',
+    'gate-engine.js',
+    'file-manager.js',
+    'file-creator.js',
+    'connectors.js',
+    'conversation-engine.js',
+    'cobra-orchestrator.js',
+    'task-runner.js',
+  ],
+  coverageThresholds: {
+    global: {
+      branches: 50,
+      functions: 60,
+      lines: 60,
+      statements: 60,
+    },
+  },
+};

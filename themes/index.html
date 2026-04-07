@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>COBRA — Theme Gallery</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0B0B0F;color:#F5F5F7;min-height:100vh;padding:64px 32px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1200px;margin:0 auto}
+.head{text-align:center;margin-bottom:64px}
+.eyebrow{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:11px;color:#FF6B35;text-transform:uppercase;letter-spacing:0.2em;padding:8px 18px;background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.3);border-radius:30px;margin-bottom:24px}
+h1{font-family:'Fraunces',serif;font-size:clamp(48px,8vw,96px);font-weight:500;letter-spacing:-0.03em;line-height:1;margin-bottom:20px}
+h1 em{font-style:italic;background:linear-gradient(135deg,#FF6B35,#F7B538,#FFD700);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sub{font-size:18px;color:#A8A8B0;max-width:600px;margin:0 auto;line-height:1.6}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.card{background:#13131A;border:1px solid rgba(255,255,255,0.08);border-radius:24px;overflow:hidden;text-decoration:none;color:inherit;transition:all 0.3s;display:block}
+.card:hover{transform:translateY(-8px);border-color:#FF6B35;box-shadow:0 24px 60px rgba(0,0,0,0.5)}
+.card-feat{grid-column:span 2}
+.preview{aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:64px;font-weight:700;letter-spacing:-0.02em;position:relative;overflow:hidden}
+.preview-feat{aspect-ratio:21/9;font-size:96px}
+.prev-pres{background:linear-gradient(135deg,#FF6B35 0%,#9B7AFE 50%,#52E5E7 100%);color:#0B0B0F}
+.prev-aurora{background:linear-gradient(135deg,#070815,#1a1f3d,#2d1b4e);color:transparent;-webkit-background-clip:text;background-image:linear-gradient(135deg,#52bbff,#9382ff,#ff6ec4)}
+.prev-aurora{background:#070815;position:relative}
+.prev-aurora span{background:linear-gradient(135deg,#52bbff,#9382ff,#ff6ec4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.prev-linen{background:linear-gradient(135deg,#FBF8F4,#F0E5D0);color:#C44536;font-style:italic}
+.prev-carbon{background:#0A0A0A;color:#FFD700;font-family:'JetBrains Mono',monospace;font-size:48px;letter-spacing:0.1em;border-bottom:4px solid #FFD700}
+.info{padding:28px}
+.tag{font-family:'JetBrains Mono',monospace;font-size:10px;color:#FF6B35;text-transform:uppercase;letter-spacing:0.15em;margin-bottom:8px}
+.name{font-family:'Fraunces',serif;font-size:26px;font-weight:600;letter-spacing:-0.01em;margin-bottom:8px}
+.desc{font-size:14px;color:#A8A8B0;line-height:1.6}
+.foot{text-align:center;margin-top:64px;padding-top:32px;border-top:1px solid rgba(255,255,255,0.06);color:#6B6B78;font-family:'JetBrains Mono',monospace;font-size:12px}
+@media (max-width:800px){.grid,.grid-3{grid-template-columns:1fr}.card-feat{grid-column:span 1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <span class="eyebrow">★ Theme Gallery · v5.2</span>
+    <h1>Cobra,<br><em>quattro modi</em></h1>
+    <p class="sub">Una presentazione magazine e tre temi grafici completi. Tutti contengono le 12 sezioni dell'app, pronti da riutilizzare.</p>
+  </div>
+
+  <div class="grid">
+    <a href="presentation.html" class="card card-feat">
+      <div class="preview preview-feat prev-pres">PRESENTAZIONE</div>
+      <div class="info">
+        <div class="tag">★ Magazine cinematografica</div>
+        <h2 class="name">The Magazine — Issue 01</h2>
+        <p class="desc">Presentazione editoriale dell'applicazione: filosofia, architettura, screenshot live dei prototipi, vantaggi quotidiani, numeri. Stile rivista moderna, gradient, font Fraunces + Inter + JetBrains Mono.</p>
+      </div>
+    </a>
+  </div>
+
+  <div class="grid-3">
+    <a href="aurora.html" class="card">
+      <div class="preview prev-aurora"><span>Aurora</span></div>
+      <div class="info">
+        <div class="tag">Theme A · Dark glass</div>
+        <h2 class="name">Aurora</h2>
+        <p class="desc">Glassmorphism scuro, gradienti cyan-violet-pink, vibe futuristica. Space Grotesk + JetBrains Mono.</p>
+      </div>
+    </a>
+    <a href="linen.html" class="card">
+      <div class="preview prev-linen">Linen</div>
+      <div class="info">
+        <div class="tag">Theme B · Editorial light</div>
+        <h2 class="name">Linen</h2>
+        <p class="desc">Carta, terra e sage. Eleganza editoriale per chi lavora a lungo. Fraunces serif + Inter sans.</p>
+      </div>
+    </a>
+    <a href="carbon.html" class="card">
+      <div class="preview prev-carbon">CARBON</div>
+      <div class="info">
+        <div class="tag">Theme C · Pro mono</div>
+        <h2 class="name">Carbon</h2>
+        <p class="desc">High-contrast monocromo + accento giallo. Vibe trader Bloomberg, data-dense. IBM Plex Mono.</p>
+      </div>
+    </a>
+  </div>
+
+  <div class="foot">COBRA v5.2 · 12 sezioni · 3 temi · 1 magazine</div>
+</div>
+</body>
+</html>

@@ -304,7 +304,7 @@ Connectors.register(createConnector({
         finalHeaders.Authorization = `Basic ${btoa(config.authValue)}`;
       }
 
-      let retries = 1;
+      const retries = 1;
       let lastError = null;
 
       for (let attempt = 0; attempt <= retries; attempt++) {

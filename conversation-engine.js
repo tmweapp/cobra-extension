@@ -17,6 +17,8 @@ class ConversationEngine {
     this._baseSummaryThreshold = 10;
     // Mutex/flag to prevent concurrent summarization
     this._summarizingConversations = new Set();
+    // Chat memory per conversazione {convId -> ChatMemory}
+    this.chatMemories = new Map();
   }
 
   /**
@@ -92,6 +94,7 @@ class ConversationEngine {
   /**
    * Crea una nuova conversazione
    * Restituisce {id, title, messages: [], summary: '', metadata, createdAt, updatedAt}
+   * Crea anche una ChatMemory associata
    */
   createConversation(title, metadata = {}) {
     // Genera un ID univoco per la conversazione
@@ -110,6 +113,12 @@ class ConversationEngine {
 
     this.conversations.set(id, conversation);
     this.activeConversationId = id;
+
+    // Crea ChatMemory per questa conversazione
+    if (typeof ChatMemory !== 'undefined') {
+      this.chatMemories.set(id, new ChatMemory());
+    }
+
     this.save();
 
     return conversation;
@@ -120,10 +129,12 @@ class ConversationEngine {
    * role: 'user' | 'ai' | 'system' | 'tool'
    * content: il testo del messaggio
    * metadata: dati aggiuntivi opzionali
+   * tier: 'full' (default), 'summary', 'synthetic' - per ChatMemory
    *
    * Attiva automaticamente il rolling summary se i messaggi superano la soglia
+   * Aggiunge anche a ChatMemory se disponibile
    */
-  addMessage(convId, role, content, metadata = {}) {
+  addMessage(convId, role, content, metadata = {}, tier = 'full') {
     const conversation = this.conversations.get(convId);
     if (!conversation) {
       throw new Error(`Conversazione non trovata: ${convId}`);
@@ -142,6 +153,12 @@ class ConversationEngine {
     conversation.messages.push(message);
     conversation.updatedAt = new Date().toISOString();
 
+    // Aggiunge a ChatMemory
+    const chatMemory = this.chatMemories.get(convId);
+    if (chatMemory) {
+      chatMemory.addMessage(role, content, tier);
+    }
+
     // Controlla se è necessario eseguire il rolling summary (soglia adattiva)
     const adaptiveThreshold = this._adaptThreshold(conversation);
     if (conversation.messages.length > adaptiveThreshold) {
@@ -153,6 +170,29 @@ class ConversationEngine {
     this.save();
 
     return message;
+  }
+
+  /**
+   * Ottiene il contesto prompt da ChatMemory per una conversazione
+   * Ritorna { rollingSummary, liveMessages }
+   */
+  getPromptContext(convId) {
+    const chatMemory = this.chatMemories.get(convId);
+    if (!chatMemory) {
+      return null;
+    }
+    return chatMemory.getPromptContext();
+  }
+
+  /**
+   * Ottiene statistiche ChatMemory per una conversazione
+   */
+  getChatMemoryStats(convId) {
+    const chatMemory = this.chatMemories.get(convId);
+    if (!chatMemory) {
+      return null;
+    }
+    return chatMemory.getStats();
   }
 
   /**
@@ -402,10 +442,23 @@ class ConversationEngine {
 
   /**
    * Elimina una conversazione per ID
+   * Cancella anche la ChatMemory associata
    */
   deleteConversation(convId) {
     if (this.conversations.has(convId)) {
       this.conversations.delete(convId);
+
+      // Cancella ChatMemory
+      if (this.chatMemories.has(convId)) {
+        // Pulisci temp docs della sessione
+        const chatMemory = this.chatMemories.get(convId);
+        if (chatMemory && chatMemory._sessionId && typeof cobraTempDocs !== 'undefined') {
+          cobraTempDocs.clearSession(chatMemory._sessionId).catch(e =>
+            console.warn('[ConversationEngine] Failed to clear temp docs:', e.message)
+          );
+        }
+        this.chatMemories.delete(convId);
+      }
 
       // Se era la conversazione attiva, svuota activeConversationId
       if (this.activeConversationId === convId) {

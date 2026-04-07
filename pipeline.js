@@ -588,7 +588,7 @@ const Pipeline = {
    * Parse comparison expressions
    */
   _parseComparisonExpressionWithParser(parser) {
-    let left = this._parsePrimaryExpressionWithParser(parser);
+    const left = this._parsePrimaryExpressionWithParser(parser);
 
     if (parser.pos < parser.tokens.length && parser.tokens[parser.pos]?.type === 'operator') {
       const op = parser.tokens[parser.pos].value;

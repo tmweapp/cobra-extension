@@ -54,7 +54,7 @@ const Result = {
    * Check if a value is a Result object
    */
   isResult(val) {
-    return val && typeof val === 'object' && 'success' in val;
+    return val != null && typeof val === 'object' && 'success' in val;
   },
 
   /**

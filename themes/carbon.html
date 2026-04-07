@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>COBRA — Carbon Theme</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0A0A0A;--bg-1:#111111;--bg-2:#161616;--bg-3:#1E1E1E;
+  --line:#2A2A2A;--line-2:#383838;
+  --ink:#F5F5F5;--ink-2:#A8A8A8;--ink-3:#6B6B6B;
+  --yellow:#FFD700;--yellow-d:#E5C100;
+  --red:#FF3B30;--green:#00FF88;--blue:#5AC8FA;
+  --mono:'IBM Plex Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--ink);font-size:13px;-webkit-font-smoothing:antialiased}
+.mono{font-family:var(--mono)}
+
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+.sidebar{background:var(--bg-1);border-right:1px solid var(--line);padding:20px 12px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:10px;padding:8px 12px 18px;border-bottom:1px solid var(--line);margin-bottom:18px}
+.brand-mark{width:32px;height:32px;background:var(--yellow);color:var(--bg);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:18px}
+.brand-name{font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:0.05em}
+.brand-sub{font-size:9px;color:var(--ink-3);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.1em}
+.nav{display:flex;flex-direction:column;gap:1px}
+.nav-section{font-family:var(--mono);font-size:9px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.15em;margin:14px 12px 6px;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:12px;padding:9px 12px;cursor:pointer;color:var(--ink-2);font-size:12px;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.05em;border-left:2px solid transparent;transition:all 0.15s}
+.nav-item:hover{background:var(--bg-2);color:var(--ink)}
+.nav-item.active{background:var(--bg-2);color:var(--yellow);border-left-color:var(--yellow)}
+.nav-icon{width:14px;text-align:center;font-size:12px}
+
+.main{padding:0;background:var(--bg)}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid var(--line);background:var(--bg-1);position:sticky;top:0;z-index:10}
+.workspace-pill{display:flex;align-items:center;gap:10px;padding:7px 14px;background:var(--bg-2);border:1px solid var(--line);cursor:pointer;font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:0.1em}
+.workspace-dot{width:8px;height:8px;background:var(--yellow);box-shadow:0 0 8px var(--yellow)}
+.live-indicator{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;color:var(--green);text-transform:uppercase;letter-spacing:0.15em}
+.live-dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.top-actions{display:flex;gap:6px}
+.icon-btn{width:34px;height:34px;background:var(--bg-2);border:1px solid var(--line);color:var(--ink-2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px}
+.icon-btn:hover{background:var(--bg-3);color:var(--yellow);border-color:var(--yellow)}
+
+.view{display:none;padding:32px;animation:fade 0.2s}
+.view.active{display:block}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+
+.view-header{margin-bottom:28px;border-bottom:1px solid var(--line);padding-bottom:20px}
+.view-eyebrow{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:0.2em;color:var(--yellow);font-weight:600;margin-bottom:6px}
+.view-title{font-family:var(--mono);font-size:32px;font-weight:700;letter-spacing:-0.01em;color:var(--ink);text-transform:uppercase}
+.view-sub{color:var(--ink-2);margin-top:10px;font-size:13px;max-width:700px;font-family:var(--mono)}
+
+.card{background:var(--bg-1);border:1px solid var(--line);padding:20px}
+.card:hover{border-color:var(--line-2)}
+
+/* CHAT */
+.chat-container{display:grid;grid-template-rows:auto 1fr auto;gap:16px;height:calc(100vh - 110px)}
+.agent-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--bg-1);border:1px solid var(--line)}
+.agent-count{font-family:var(--mono);font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.15em;font-weight:600}
+.agent-pill{padding:5px 12px;background:var(--bg-2);border:1px solid var(--line);font-family:var(--mono);font-size:10px;text-transform:uppercase;display:flex;align-items:center;gap:6px;letter-spacing:0.1em}
+.agent-status{width:6px;height:6px;background:var(--green);box-shadow:0 0 6px var(--green)}
+.page-context{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink-3)}
+.messages{overflow-y:auto;padding-right:8px;display:flex;flex-direction:column;gap:14px}
+.msg{max-width:80%;padding:14px 18px;border:1px solid var(--line);font-size:13px;line-height:1.55}
+.msg-user{align-self:flex-end;background:var(--bg-2);border-color:var(--yellow)}
+.msg-ai{align-self:flex-start;background:var(--bg-1)}
+.msg-meta{font-family:var(--mono);font-size:9px;color:var(--ink-3);margin-top:10px;display:flex;gap:10px;text-transform:uppercase;letter-spacing:0.1em}
+.msg-tier{padding:2px 8px;background:var(--yellow);color:var(--bg);font-weight:700}
+.reasoning-trace{margin-top:12px;padding:12px;background:var(--bg);border-left:2px solid var(--yellow);font-family:var(--mono);font-size:10px;color:var(--ink-2)}
+.trace-step{padding:2px 0}
+.trace-step::before{content:'> ';color:var(--yellow)}
+.input-zone{padding:14px;background:var(--bg-1);border:1px solid var(--line)}
+.input-row{display:flex;align-items:center;gap:10px}
+.chat-input{flex:1;background:transparent;border:none;color:var(--ink);font-family:var(--mono);font-size:13px;outline:none;padding:8px;resize:none}
+.chat-input::placeholder{color:var(--ink-3)}
+.send-btn{padding:10px 20px;background:var(--yellow);border:none;color:var(--bg);font-weight:700;cursor:pointer;font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:0.1em}
+.send-btn:hover{background:var(--yellow-d)}
+
+.subtabs{display:flex;gap:0;margin-bottom:24px;border-bottom:1px solid var(--line)}
+.subtab{padding:12px 18px;background:transparent;border:none;color:var(--ink-3);cursor:pointer;font-family:var(--mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;border-bottom:2px solid transparent;margin-bottom:-1px}
+.subtab:hover{color:var(--ink)}
+.subtab.active{color:var(--yellow);border-bottom-color:var(--yellow)}
+.subview{display:none}
+.subview.active{display:block}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line)}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line)}
+.grid-2>*,.grid-3>*,.grid-4>*{background:var(--bg-1)}
+
+.stat{padding:20px;border:1px solid var(--line)}
+.stat-value{font-family:var(--mono);font-size:32px;font-weight:700;color:var(--yellow);letter-spacing:-0.02em}
+.stat-label{font-family:var(--mono);font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.15em;margin-top:4px;font-weight:600}
+.stat-delta{font-family:var(--mono);font-size:10px;color:var(--green);margin-top:6px}
+.stat-delta.down{color:var(--red)}
+
+.item{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--bg-1);border:1px solid var(--line);margin-bottom:1px}
+.item:hover{background:var(--bg-2)}
+.item-icon{width:34px;height:34px;background:var(--bg-2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;color:var(--yellow)}
+.item-body{flex:1;min-width:0}
+.item-title{font-weight:600;font-size:13px;margin-bottom:2px;font-family:var(--mono)}
+.item-meta{font-family:var(--mono);font-size:10px;color:var(--ink-3);display:flex;gap:10px;text-transform:uppercase;letter-spacing:0.05em}
+.item-tag{padding:2px 8px;background:var(--bg-3);color:var(--yellow);font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em}
+
+.tier-badge{padding:3px 10px;font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em}
+.tier-milestone{background:var(--yellow);color:var(--bg)}
+.tier-hot{background:var(--green);color:var(--bg)}
+.tier-cold{background:var(--bg-3);color:var(--ink-3)}
+
+/* Briefing */
+.briefing{padding:28px;background:var(--bg-1);border:1px solid var(--line);border-left:4px solid var(--yellow)}
+.briefing-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.briefing-icon{width:42px;height:42px;background:var(--yellow);color:var(--bg);display:flex;align-items:center;justify-content:center;font-size:20px}
+.briefing-title{font-family:var(--mono);font-size:18px;font-weight:700;text-transform:uppercase;letter-spacing:0.02em}
+.briefing-meta{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:3px;text-transform:uppercase;letter-spacing:0.1em}
+.briefing-section{margin-top:18px}
+.briefing-section h4{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:0.15em;color:var(--yellow);margin-bottom:6px;font-weight:700}
+.briefing-section p{font-size:13px;color:var(--ink);line-height:1.65}
+
+/* Workspace */
+.workspace-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+.ws-card{padding:24px 20px;background:var(--bg-1);cursor:pointer;text-align:center;position:relative}
+.ws-card:hover{background:var(--bg-2)}
+.ws-card.detected{background:var(--bg-2);border-left:3px solid var(--yellow)}
+.ws-emoji{font-size:32px;margin-bottom:10px;display:block;filter:grayscale(0.5)}
+.ws-name{font-family:var(--mono);font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em}
+.ws-desc{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:4px;text-transform:uppercase;letter-spacing:0.05em}
+.ws-detected-badge{position:absolute;top:8px;right:8px;padding:3px 8px;background:var(--yellow);color:var(--bg);font-family:var(--mono);font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em}
+
+/* Library */
+.library-tree{display:flex;flex-direction:column;gap:1px}
+.lib-node{padding:12px 16px;background:var(--bg-1);border:1px solid var(--line);display:flex;align-items:center;gap:12px;cursor:pointer;font-family:var(--mono);font-size:12px}
+.lib-node:hover{background:var(--bg-2)}
+.lib-level-1{margin-left:24px}
+.lib-level-2{margin-left:48px}
+.lib-level-3{margin-left:72px}
+.lib-icon{font-size:14px;color:var(--yellow)}
+.lib-meta{margin-left:auto;color:var(--ink-3);font-size:10px;text-transform:uppercase;letter-spacing:0.05em}
+
+/* Settings */
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;background:var(--bg-1);border:1px solid var(--line);margin-bottom:1px}
+.setting-info h4{font-size:13px;font-weight:600;margin-bottom:3px;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.05em}
+.setting-info p{font-family:var(--mono);font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.05em}
+.toggle{width:42px;height:22px;background:var(--bg-3);position:relative;cursor:pointer;border:1px solid var(--line)}
+.toggle.on{background:var(--yellow)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;background:var(--ink);transition:all 0.2s}
+.toggle.on::after{left:22px;background:var(--bg)}
+.input-field{padding:9px 14px;background:var(--bg-2);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);font-size:12px;width:240px}
+
+/* Comms */
+.comm-channel{display:flex;align-items:center;gap:16px;padding:20px;background:var(--bg-1);border:1px solid var(--line);cursor:pointer;margin-bottom:1px}
+.comm-channel:hover{background:var(--bg-2);border-color:var(--yellow)}
+.comm-icon{width:46px;height:46px;background:var(--bg-2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--yellow)}
+.comm-info h4{font-family:var(--mono);font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em}
+.comm-info p{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:4px;text-transform:uppercase;letter-spacing:0.05em}
+.comm-badge{margin-left:auto;padding:5px 12px;background:var(--yellow);color:var(--bg);font-family:var(--mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em}
+
+/* Errors */
+.error-card{padding:20px;background:var(--bg-1);border:1px solid var(--red);border-left:4px solid var(--red);display:flex;gap:16px;align-items:flex-start;margin-bottom:1px}
+.error-icon{width:42px;height:42px;background:var(--red);color:var(--ink);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.error-body h4{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.05em}
+.error-body p{font-family:var(--mono);font-size:11px;color:var(--ink-2);margin:6px 0 12px;line-height:1.5}
+.error-actions{display:flex;gap:8px}
+.btn-pill{padding:8px 16px;background:var(--bg-2);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);font-size:10px;cursor:pointer;font-weight:600;text-transform:uppercase;letter-spacing:0.1em}
+.btn-pill.primary{background:var(--yellow);color:var(--bg);border-color:var(--yellow)}
+
+/* Toast */
+.toast-warn{position:fixed;bottom:24px;right:24px;padding:18px 22px;background:var(--bg-1);border:1px solid var(--yellow);border-left:4px solid var(--yellow);display:flex;align-items:center;gap:14px;max-width:380px;z-index:100;animation:slide 0.3s}
+@keyframes slide{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast-icon{font-size:24px;color:var(--yellow)}
+.toast-body{flex:1}
+.toast-title{font-family:var(--mono);font-weight:700;font-size:13px;color:var(--ink);text-transform:uppercase;letter-spacing:0.05em}
+.toast-text{font-family:var(--mono);font-size:10px;color:var(--ink-2);margin-top:4px}
+.toast-progress{position:absolute;bottom:0;left:0;height:2px;background:var(--yellow);animation:countdown 3s linear}
+@keyframes countdown{from{width:100%}to{width:0%}}
+
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:var(--bg-1)}
+::-webkit-scrollbar-thumb{background:var(--line-2)}
+::-webkit-scrollbar-thumb:hover{background:var(--yellow)}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">C</div>
+      <div>
+        <div class="brand-name">COBRA</div>
+        <div class="brand-sub">v5.2 / Carbon</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">Operations</div>
+      <div class="nav-item active" data-view="chat"><span class="nav-icon">▶</span>Chat</div>
+      <div class="nav-item" data-view="briefing"><span class="nav-icon">≡</span>Briefing</div>
+      <div class="nav-item" data-view="workspace"><span class="nav-icon">◈</span>Workspace</div>
+      <div class="nav-section">Memory</div>
+      <div class="nav-item" data-view="archivio"><span class="nav-icon">▦</span>Archivio</div>
+      <div class="nav-item" data-view="milestones"><span class="nav-icon">★</span>Milestones</div>
+      <div class="nav-item" data-view="library"><span class="nav-icon">⊞</span>Library</div>
+      <div class="nav-section">Comms</div>
+      <div class="nav-item" data-view="comms"><span class="nav-icon">⇄</span>Channels</div>
+      <div class="nav-section">System</div>
+      <div class="nav-item" data-view="ai"><span class="nav-icon">◉</span>AI Settings</div>
+      <div class="nav-item" data-view="settings"><span class="nav-icon">⚙</span>Settings</div>
+      <div class="nav-item" data-view="errors"><span class="nav-icon">⚠</span>Errors</div>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div style="display:flex;gap:14px;align-items:center">
+        <div class="workspace-pill"><div class="workspace-dot"></div><span>FATTURAZIONE</span><span style="color:var(--ink-3)">▾</span></div>
+        <div class="live-indicator"><div class="live-dot"></div>LIVE · 3 AGENTS</div>
+      </div>
+      <div class="top-actions">
+        <button class="icon-btn">🎤</button><button class="icon-btn">🔊</button><button class="icon-btn">🔔</button><button class="icon-btn">👤</button>
+      </div>
+    </header>
+
+    <!-- CHAT -->
+    <div class="view active" id="view-chat">
+      <div class="chat-container">
+        <div class="agent-bar">
+          <span class="agent-count">3 Agents · Active</span>
+          <div class="agent-pill"><div class="agent-status"></div>Analyzer</div>
+          <div class="agent-pill"><div class="agent-status"></div>Planner</div>
+          <div class="agent-pill"><div class="agent-status"></div>Executor</div>
+          <div class="page-context">CTX: booking.com/hotel/...</div>
+        </div>
+        <div class="messages">
+          <div class="msg msg-user">Verifica fatture insolute Acme Spa Q1 2026</div>
+          <div class="msg msg-ai">
+            3 fatture insolute Acme Spa Q1 2026: F-2026-0142 (€4.200, due 15/02), F-2026-0188 (€2.850, due 28/02), F-2026-0231 (€6.100, due 12/03). Esposizione totale: <strong style="color:var(--yellow)">€13.150</strong>. Suggerisco sollecito formale + telefono per importo &gt;€5k.
+            <div class="msg-meta"><span class="msg-tier">FULL</span>847 TKN · CLAUDE-SONNET-4.5 · 1.2s</div>
+            <div class="reasoning-trace">
+              <div class="trace-step">intent=verify_invoices confidence=0.94</div>
+              <div class="trace-step">workspace=fatturazione (auto-detected)</div>
+              <div class="trace-step">kb_query 12 milestones matched</div>
+              <div class="trace-step">tool=query_invoices status=200 success=98%</div>
+              <div class="trace-step">verify n=3 records consistent</div>
+            </div>
+          </div>
+          <div class="msg msg-user">Prepara solleciti, conferma prima invio</div>
+          <div class="msg msg-ai">Bozze in /drafts. Awaiting confirmation.<div class="msg-meta"><span class="msg-tier">SYNTH</span>42 TKN</div></div>
+        </div>
+        <div class="input-zone">
+          <div class="input-row">
+            <textarea class="chat-input" placeholder="> input command..."></textarea>
+            <button class="icon-btn">📎</button><button class="icon-btn">🎙</button>
+            <button class="send-btn">EXEC</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BRIEFING -->
+    <div class="view" id="view-briefing">
+      <div class="view-header">
+        <div class="view-eyebrow">SESSION 2026-04-07 · 09:14</div>
+        <h1 class="view-title">BRIEFING</h1>
+        <p class="view-sub">Daily KB consolidation · Workspace fatturazione · Auto-injected as system prompt at session start.</p>
+      </div>
+      <div class="briefing">
+        <div class="briefing-header">
+          <div class="briefing-icon">≡</div>
+          <div>
+            <div class="briefing-title">MEMORIA UTILE / RESUME</div>
+            <div class="briefing-meta">UPDATED 2m AGO · 743 TKN · 12 MILESTONES</div>
+          </div>
+        </div>
+        <div class="briefing-section"><h4>// CONTEXT</h4><p>End of Q1 2026. Focus: recupero crediti + chiusura fatturazione marzo. Top exposure: Acme Spa €13.150 / 3 fatture.</p></div>
+        <div class="briefing-section"><h4>// MILESTONE RULES</h4><p>Pharma clients → due by day 5. Amount &gt;€10k → mandatory phone. Intercompany → manual approval always.</p></div>
+        <div class="briefing-section"><h4>// RECENT EXAMPLES</h4><p>Bravo Logistics €8.400 → paid in 4h. Approach: phone + email same day.</p></div>
+        <div class="briefing-section"><h4>// WATCHLIST</h4><p>Charlie Industries: new CFO 20/03, verify contacts. Delta SRL: rate plan €1.500/mo until Jun.</p></div>
+      </div>
+      <div class="grid-3" style="margin-top:24px"><div class="stat"><div class="stat-value">12</div><div class="stat-label">MILESTONES</div><div class="stat-delta">▲ 2 today</div></div><div class="stat"><div class="stat-value">47</div><div class="stat-label">EVENTS</div><div class="stat-delta">▲ 8 today</div></div><div class="stat"><div class="stat-value">€13K</div><div class="stat-label">EXPOSURE</div><div class="stat-delta down">▼ €2.4k</div></div></div>
+    </div>
+
+    <!-- WORKSPACE -->
+    <div class="view" id="view-workspace">
+      <div class="view-header">
+        <div class="view-eyebrow">ACTIVE PARTITION</div>
+        <h1 class="view-title">WORKSPACE</h1>
+        <p class="view-sub">Auto-detected partition with isolated memory. Each workspace has its own KB, milestones, and rules. Context-driven switching.</p>
+      </div>
+      <div class="workspace-grid">
+        <div class="ws-card detected"><span class="ws-emoji">📑</span><div class="ws-name">FATTURAZIONE</div><div class="ws-desc">FATTURE · IVA</div><span class="ws-detected-badge">94% MATCH</span></div>
+        <div class="ws-card"><span class="ws-emoji">💰</span><div class="ws-name">CREDITO</div><div class="ws-desc">INSOLUTI</div></div>
+        <div class="ws-card"><span class="ws-emoji">🤝</span><div class="ws-name">COMMERCIALE</div><div class="ws-desc">LEAD · OFFER</div></div>
+        <div class="ws-card"><span class="ws-emoji">💎</span><div class="ws-name">PRICING</div><div class="ws-desc">LISTINI · MARG</div></div>
+        <div class="ws-card"><span class="ws-emoji">🌐</span><div class="ws-name">GENERIC</div><div class="ws-desc">UNSPECIALIZED</div></div>
+      </div>
+      <div class="grid-3" style="margin-top:32px">
+        <div class="stat"><div class="stat-label">PARTITION</div><div class="stat-value" style="font-size:22px">FATTURAZIONE</div><div class="stat-delta">147 RULES · 12 MS · 3 DOCS</div></div>
+        <div class="stat"><div class="stat-label">SESSION</div><div class="stat-value" style="font-size:22px">02:14:00</div><div class="stat-delta">47 EVENTS</div></div>
+        <div class="stat"><div class="stat-label">TOKEN BUDGET</div><div class="stat-value" style="font-size:22px">8.247/50K</div><div class="stat-delta">16% · €0.18 EST</div></div>
+      </div>
+    </div>
+
+    <!-- ARCHIVIO -->
+    <div class="view" id="view-archivio">
+      <div class="view-header">
+        <div class="view-eyebrow">4-TIER MEMORY SYSTEM</div>
+        <h1 class="view-title">ARCHIVIO</h1>
+        <p class="view-sub">Working · Hot · Milestone · Cold. Promotion driven by reuse + recency + manual flag.</p>
+      </div>
+      <div class="subtabs">
+        <button class="subtab active" data-sub="memoria">MEMORIA</button>
+        <button class="subtab" data-sub="prompts">PROMPTS</button>
+        <button class="subtab" data-sub="kb">KNOWLEDGE BASE</button>
+        <button class="subtab" data-sub="jobs">TASKS</button>
+        <button class="subtab" data-sub="files">FILES</button>
+        <button class="subtab" data-sub="cronologia">CRONOLOGIA</button>
+      </div>
+      <div class="subview active" id="sub-memoria">
+        <div class="grid-4" style="margin-bottom:20px">
+          <div class="stat"><div class="stat-value">147</div><div class="stat-label">TOTAL</div></div>
+          <div class="stat"><div class="stat-value" style="color:var(--yellow)">12</div><div class="stat-label">MILESTONE</div></div>
+          <div class="stat"><div class="stat-value" style="color:var(--green)">89</div><div class="stat-label">HOT</div></div>
+          <div class="stat"><div class="stat-value" style="color:var(--ink-3)">46</div><div class="stat-label">COLD</div></div>
+        </div>
+        <div class="item"><div class="item-icon">★</div><div class="item-body"><div class="item-title">Pharma → due by day 5</div><div class="item-meta"><span>USED 47x</span><span>UPDATED 2d</span></div></div><span class="tier-badge tier-milestone">MILESTONE</span></div>
+        <div class="item"><div class="item-icon">★</div><div class="item-body"><div class="item-title">Amount &gt;€10k → phone required</div><div class="item-meta"><span>USED 32x</span><span>UPDATED 5d</span></div></div><span class="tier-badge tier-milestone">MILESTONE</span></div>
+        <div class="item"><div class="item-icon">◉</div><div class="item-body"><div class="item-title">Acme Spa: pays at 30 days from receipt</div><div class="item-meta"><span>USED 18x</span><span>UPDATED 1d</span></div></div><span class="tier-badge tier-hot">HOT</span></div>
+        <div class="item"><div class="item-icon">◉</div><div class="item-body"><div class="item-title">Charlie Industries: new CFO 20/03</div><div class="item-meta"><span>USED 8x</span><span>UPDATED 3d</span></div></div><span class="tier-badge tier-hot">HOT</span></div>
+        <div class="item"><div class="item-icon">○</div><div class="item-body"><div class="item-title">Vendor X discontinued 2024</div><div class="item-meta"><span>USED 0x</span><span>UPDATED 180d</span></div></div><span class="tier-badge tier-cold">COLD</span></div>
+      </div>
+      <div class="subview" id="sub-prompts"><div class="item"><div class="item-icon">{}</div><div class="item-body"><div class="item-title">prompt_briefing_v3</div><div class="item-meta"><span>743 TKN</span><span>v3.2</span></div></div></div><div class="item"><div class="item-icon">{}</div><div class="item-body"><div class="item-title">prompt_executor_safe</div><div class="item-meta"><span>312 TKN</span><span>v1.8</span></div></div></div></div>
+      <div class="subview" id="sub-kb"><div class="item"><div class="item-icon">⊞</div><div class="item-body"><div class="item-title">fatturazione_kb.json</div><div class="item-meta"><span>147 ENTRIES</span><span>2.4 MB</span></div></div></div></div>
+      <div class="subview" id="sub-jobs"><div class="item"><div class="item-icon">▶</div><div class="item-body"><div class="item-title">solleciti_q1_2026</div><div class="item-meta"><span>RUNNING</span><span>3 STEPS</span></div></div></div></div>
+      <div class="subview" id="sub-files"><div class="item"><div class="item-icon">📎</div><div class="item-body"><div class="item-title">acme_spa_estratto.pdf</div><div class="item-meta"><span>2.1 MB</span><span>UPLOADED 2h AGO</span></div></div></div></div>
+      <div class="subview" id="sub-cronologia"><div class="item"><div class="item-icon">⏱</div><div class="item-body"><div class="item-title">Session 2026-04-07 · fatturazione</div><div class="item-meta"><span>2h 14m</span><span>47 EVENTS</span></div></div></div><div class="item"><div class="item-icon">⏱</div><div class="item-body"><div class="item-title">Session 2026-04-06 · credito</div><div class="item-meta"><span>1h 32m</span><span>28 EVENTS</span></div></div></div></div>
+    </div>
+
+    <!-- MILESTONES -->
+    <div class="view" id="view-milestones">
+      <div class="view-header"><div class="view-eyebrow">PROMOTED MEMORIES</div><h1 class="view-title">MILESTONES</h1><p class="view-sub">Top-tier memories injected in every prompt. Promoted automatically (reuse &gt;10x) or manually flagged.</p></div>
+      <div class="grid-2" style="margin-bottom:20px"><div class="stat"><div class="stat-value">12</div><div class="stat-label">ACTIVE MILESTONES</div></div><div class="stat"><div class="stat-value">94%</div><div class="stat-label">REUSE RATE</div></div></div>
+      <div class="item"><div class="item-icon">★</div><div class="item-body"><div class="item-title">Pharma clients → due by day 5 of month</div><div class="item-meta"><span>USED 47x</span><span>WORKSPACE FATTURAZIONE</span></div></div><span class="item-tag">CRITICAL</span></div>
+      <div class="item"><div class="item-icon">★</div><div class="item-body"><div class="item-title">Amount &gt;€10k → mandatory phone contact</div><div class="item-meta"><span>USED 32x</span><span>CROSS-WORKSPACE</span></div></div><span class="item-tag">RULE</span></div>
+      <div class="item"><div class="item-icon">★</div><div class="item-body"><div class="item-title">Intercompany → always manual approval</div><div class="item-meta"><span>USED 28x</span><span>WORKSPACE FATTURAZIONE</span></div></div><span class="item-tag">SAFETY</span></div>
+      <div class="item"><div class="item-icon">★</div><div class="item-body"><div class="item-title">Bravo Logistics responds in 4h to phone+email</div><div class="item-meta"><span>USED 19x</span><span>WORKSPACE CREDITO</span></div></div><span class="item-tag">PATTERN</span></div>
+    </div>
+
+    <!-- LIBRARY -->
+    <div class="view" id="view-library">
+      <div class="view-header"><div class="view-eyebrow">REMOTE CONSOLIDATED KB</div><h1 class="view-title">LIBRARY</h1><p class="view-sub">Unlimited consolidation levels. AI never reads everything: tags + categories + keyword association reduce lookup to ~20 lines.</p></div>
+      <div class="library-tree">
+        <div class="lib-node"><span class="lib-icon">⊞</span><strong>FATTURAZIONE_2026</strong><span class="lib-meta">L0 · 12 DOCS</span></div>
+        <div class="lib-node lib-level-1"><span class="lib-icon">⊟</span>Q1_2026_consolidato<span class="lib-meta">L1 · 4 DOCS</span></div>
+        <div class="lib-node lib-level-2"><span class="lib-icon">⊟</span>gennaio_riassunto<span class="lib-meta">L2 · 320 TKN</span></div>
+        <div class="lib-node lib-level-2"><span class="lib-icon">⊟</span>febbraio_riassunto<span class="lib-meta">L2 · 287 TKN</span></div>
+        <div class="lib-node lib-level-2"><span class="lib-icon">⊟</span>marzo_riassunto<span class="lib-meta">L2 · 412 TKN</span></div>
+        <div class="lib-node lib-level-1"><span class="lib-icon">⊟</span>regole_clienti<span class="lib-meta">L1 · 47 RULES</span></div>
+        <div class="lib-node lib-level-2"><span class="lib-icon">▦</span>pharma_clients<span class="lib-meta">L2 · 12 RULES</span></div>
+        <div class="lib-node lib-level-3"><span class="lib-icon">▪</span>acme_spa_profile<span class="lib-meta">L3 · 89 TKN</span></div>
+        <div class="lib-node lib-level-3"><span class="lib-icon">▪</span>bravo_logistics_profile<span class="lib-meta">L3 · 76 TKN</span></div>
+        <div class="lib-node"><span class="lib-icon">⊞</span><strong>CREDITO_2026</strong><span class="lib-meta">L0 · 8 DOCS</span></div>
+        <div class="lib-node"><span class="lib-icon">⊞</span><strong>SHARED_PATTERNS</strong><span class="lib-meta">L0 · CROSS-WS</span></div>
+      </div>
+    </div>
+
+    <!-- COMMS -->
+    <div class="view" id="view-comms">
+      <div class="view-header"><div class="view-eyebrow">EXTERNAL CHANNELS</div><h1 class="view-title">CHANNELS</h1><p class="view-sub">Outbound on user confirm. Inbound auto-classified by workspace. Drafts always reviewable before send.</p></div>
+      <div class="comm-channel"><div class="comm-icon">✉</div><div class="comm-info"><h4>EMAIL · GMAIL</h4><p>3 DRAFTS PENDING · 12 SENT TODAY</p></div><span class="comm-badge">3 DRAFT</span></div>
+      <div class="comm-channel"><div class="comm-icon">⌬</div><div class="comm-info"><h4>WHATSAPP BIZ</h4><p>1 PENDING REPLY · 8 ACTIVE THREADS</p></div><span class="comm-badge">1 NEW</span></div>
+      <div class="comm-channel"><div class="comm-icon">in</div><div class="comm-info"><h4>LINKEDIN</h4><p>SCHEDULED · 2 INMAIL TODAY</p></div></div>
+      <div class="comm-channel"><div class="comm-icon">☏</div><div class="comm-info"><h4>VOICE / TWILIO</h4><p>0 CALLS · TRANSCRIPT READY</p></div></div>
+    </div>
+
+    <!-- AI SETTINGS -->
+    <div class="view" id="view-ai">
+      <div class="view-header"><div class="view-eyebrow">PROVIDER + ROUTER</div><h1 class="view-title">AI SETTINGS</h1><p class="view-sub">Multi-provider fallback chain. Tier-based routing. Confidence threshold + clarify-on-low.</p></div>
+      <div class="grid-3" style="margin-bottom:20px"><div class="stat"><div class="stat-value">CLAUDE</div><div class="stat-label">PRIMARY</div><div class="stat-delta">SONNET 4.5</div></div><div class="stat"><div class="stat-value">GPT-4.1</div><div class="stat-label">FALLBACK</div><div class="stat-delta">OPENAI</div></div><div class="stat"><div class="stat-value">LLAMA</div><div class="stat-label">LOCAL</div><div class="stat-delta">OFFLINE READY</div></div></div>
+      <div class="setting-row"><div class="setting-info"><h4>CONFIDENCE THRESHOLD</h4><p>BELOW THIS, AI ASKS CLARIFICATION</p></div><input class="input-field" value="0.75"></div>
+      <div class="setting-row"><div class="setting-info"><h4>REASONING TRACE</h4><p>SHOW STEP-BY-STEP IN CHAT</p></div><div class="toggle on"></div></div>
+      <div class="setting-row"><div class="setting-info"><h4>3-TIER RESPONSE</h4><p>SYNTHETIC / SUMMARY / FULL</p></div><div class="toggle on"></div></div>
+      <div class="setting-row"><div class="setting-info"><h4>AUTO-PROMOTE MILESTONES</h4><p>REUSE &gt;10x AUTO PROMOTE</p></div><div class="toggle on"></div></div>
+      <div class="setting-row"><div class="setting-info"><h4>SESSION DIARY</h4><p>WRITE END-OF-SESSION SUMMARY</p></div><div class="toggle on"></div></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="view" id="view-settings">
+      <div class="view-header"><div class="view-eyebrow">SYSTEM CONFIG</div><h1 class="view-title">SETTINGS</h1><p class="view-sub">Tool safety tiers. Storage. Telemetry.</p></div>
+      <div class="setting-row"><div class="setting-info"><h4>TOOL SAFETY MODE</h4><p>SAFE / WARN / BLOCKED · DEFAULT WARN</p></div><input class="input-field" value="WARN"></div>
+      <div class="setting-row"><div class="setting-info"><h4>VOICE INPUT</h4><p>WHISPER / NATIVE BROWSER STT</p></div><div class="toggle on"></div></div>
+      <div class="setting-row"><div class="setting-info"><h4>TELEMETRY</h4><p>ANONYMOUS METRICS</p></div><div class="toggle"></div></div>
+      <div class="setting-row"><div class="setting-info"><h4>STORAGE LIMIT</h4><p>INDEXEDDB CAP</p></div><input class="input-field" value="500 MB"></div>
+      <div class="setting-row"><div class="setting-info"><h4>EXPORT MEMORY</h4><p>JSON / SQLITE / MARKDOWN</p></div><button class="btn-pill primary">EXPORT</button></div>
+    </div>
+
+    <!-- ERRORS -->
+    <div class="view" id="view-errors">
+      <div class="view-header"><div class="view-eyebrow">SYSTEM HEALTH</div><h1 class="view-title">ERRORS</h1><p class="view-sub">3-tier error boundary. Recoverable / Degraded / Fatal. All logged with context.</p></div>
+      <div class="grid-3" style="margin-bottom:20px"><div class="stat"><div class="stat-value" style="color:var(--green)">98.4%</div><div class="stat-label">UPTIME 30d</div></div><div class="stat"><div class="stat-value">3</div><div class="stat-label">WARN 24h</div></div><div class="stat"><div class="stat-value" style="color:var(--red)">0</div><div class="stat-label">FATAL 24h</div></div></div>
+      <div class="error-card"><div class="error-icon">⚠</div><div class="error-body"><h4>RATE LIMIT · CLAUDE API</h4><p>Hit at 14:32 · Auto-fallback to GPT-4.1 · 0 USER IMPACT · Context preserved.</p><div class="error-actions"><button class="btn-pill">VIEW LOG</button><button class="btn-pill primary">DISMISS</button></div></div></div>
+      <div class="error-card"><div class="error-icon">⚠</div><div class="error-body"><h4>TOOL BLOCKED · DELETE_INVOICE</h4><p>Safety tier BLOCKED. User confirmation required. Action queued.</p><div class="error-actions"><button class="btn-pill">REVIEW</button><button class="btn-pill primary">APPROVE</button></div></div></div>
+    </div>
+  </main>
+</div>
+
+<div class="toast-warn">
+  <div class="toast-icon">⚠</div>
+  <div class="toast-body">
+    <div class="toast-title">CONFIRMATION REQUIRED</div>
+    <div class="toast-text">SEND 3 SOLLECITI · ACME SPA · €13.150</div>
+  </div>
+  <div class="toast-progress"></div>
+</div>
+
+<script>
+document.querySelectorAll('.nav-item').forEach(n=>n.addEventListener('click',()=>{
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  n.classList.add('active');
+  document.getElementById('view-'+n.dataset.view).classList.add('active');
+}));
+document.querySelectorAll('.subtab').forEach(t=>t.addEventListener('click',()=>{
+  const p=t.parentElement.parentElement;
+  p.querySelectorAll('.subtab').forEach(x=>x.classList.remove('active'));
+  p.querySelectorAll('.subview').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  p.querySelector('#sub-'+t.dataset.sub).classList.add('active');
+}));
+document.querySelectorAll('.toggle').forEach(t=>t.addEventListener('click',()=>t.classList.toggle('on')));
+
+/* THEME SWITCHER */
+const sw=document.createElement('div');
+sw.innerHTML=`<style>
+.theme-switcher{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);display:flex;gap:2px;padding:4px;background:#111;border:1px solid #2A2A2A;z-index:9999;box-shadow:0 12px 40px rgba(0,0,0,0.6)}
+.theme-switcher a{display:flex;align-items:center;gap:8px;padding:10px 18px;text-decoration:none;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#A8A8A8;transition:all 0.15s;text-transform:uppercase;letter-spacing:0.1em}
+.theme-switcher a:hover{background:#1E1E1E;color:#FFD700}
+.theme-switcher a.active{background:#FFD700;color:#0A0A0A}
+.theme-dot{width:9px;height:9px}
+.dot-aurora{background:linear-gradient(135deg,#52bbff,#ff6ec4)}
+.dot-linen{background:#C44536}
+.dot-carbon{background:#FFD700}
+</style>
+<div class="theme-switcher">
+  <a href="aurora.html" data-t="aurora"><span class="theme-dot dot-aurora"></span>Aurora</a>
+  <a href="linen.html" data-t="linen"><span class="theme-dot dot-linen"></span>Linen</a>
+  <a href="carbon.html" class="active" data-t="carbon"><span class="theme-dot dot-carbon"></span>Carbon</a>
+</div>`;
+document.body.appendChild(sw);
+function syncHash(){const a=document.querySelector('.nav-item.active');if(a)location.hash=a.dataset.view}
+document.querySelectorAll('.nav-item').forEach(n=>n.addEventListener('click',syncHash));
+if(location.hash){const v=location.hash.slice(1);const t=document.querySelector('.nav-item[data-view="'+v+'"]');if(t)t.click()}
+document.querySelectorAll('.theme-switcher a:not(.active)').forEach(a=>{
+  a.addEventListener('click',e=>{if(location.hash)a.href=a.getAttribute('href')+location.hash});
+});
+</script>
+</body>
+</html>

@@ -2,6 +2,9 @@
 // Home (Chat+Actions), Archivio (Memoria+KB+Jobs+Cronologia), AI (Orchestration), Settings
 // Multi-Agent + Voice + Gate + Supabase Sync
 
+// Toast → loaded from modules/toast.js
+// ErrorBoundary → loaded from modules/error-boundary.js
+
 // ============================================================
 // STATE — Extended with agents and voice
 // ============================================================
@@ -15,16 +18,16 @@ const state = {
     learning: true, kb: true, notifications: false,
     rateLimit: 'balanced', language: 'it',
     supabaseUrl: '', supabaseKey: '',
-    elevenKey: 'sk_a62bbdb3b474fad9df5f621bdb85aca47d2153a5b6e3541f',
+    elevenKey: '',
     webhookUrl: '',
     orchestration: false, voice: true, voiceSpeed: '1.0',
-    openaiKey: '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',
+    openaiKey: '',
     openaiModel: 'gpt-4o-mini',
-    anthropicKey: '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',
+    anthropicKey: '',
     anthropicModel: 'claude-sonnet-4-20250514',
-    geminiKey: 'AIzaSyBBDjiSQSm9_LjBpxICQhpEevIDlReMw4o',
+    geminiKey: '',
     geminiModel: 'gemini-2.0-flash',
-    groqKey: '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',
+    groqKey: '',
     groqModel: 'llama-3.3-70b-versatile'
   },
   // NEW: Agent orchestration
@@ -51,37 +54,7 @@ function sanitizeHTML(str) {
   return div.innerHTML;
 }
 
-// ============================================================
-// STORAGE — Memoria locale PC (extended for agents)
-// ============================================================
-const Storage = {
-  async load(key) {
-    return new Promise(resolve => {
-      chrome.storage.local.get(key, data => resolve(data[key] || null));
-    });
-  },
-  async save(key, value) {
-    return new Promise(resolve => {
-      chrome.storage.local.set({ [key]: value }, resolve);
-    });
-  },
-  async loadAll() {
-    state.chatHistory = (await this.load('cobra_chat_history')) || [];
-    state.memories = (await this.load('cobra_memories')) || [];
-    state.habits = (await this.load('cobra_habits')) || state.habits;
-    const saved = await this.load('cobra_settings');
-    if (saved) Object.assign(state.settings, saved);
-    // Load agents config
-    const agents = await this.load('cobra_agents');
-    if (agents) state.agents = agents;
-    const leader = await this.load('cobra_leader');
-    if (leader) state.leaderAgentId = leader;
-  },
-  async saveChat() { await this.save('cobra_chat_history', state.chatHistory); },
-  async saveMemories() { await this.save('cobra_memories', state.memories); },
-  async saveHabits() { await this.save('cobra_habits', state.habits); },
-  async saveSettings() { await this.save('cobra_settings', state.settings); }
-};
+// Storage → loaded from modules/storage.js
 
 // ============================================================
 // SUPABASE CLIENT — Memory cloud
@@ -314,436 +287,17 @@ const AgentBar = {
   }
 };
 
-// ============================================================
-// VOICE — NEW module for TTS and STT
-// ============================================================
-const Voice = {
-  // ElevenLabs TTS + Web Speech API STT
-  _voices: [],        // cached voice list from ElevenLabs
-  _currentAudio: null, // currently playing audio
+// Voice → loaded from modules/voice.js (430 lines extracted)
+// CommChat → loaded from modules/comm-chat.js (250 lines extracted)
+//
+// Both modules are loaded via <script> tags in sidepanel.html before this file.
+// They use the same global `state`, `Chat`, `Toast`, `sanitizeHTML` references.
 
-  async loadVoices(forceRefresh = false) {
-    if (this._voices.length && !forceRefresh) return this._voices;
-    if (!state.settings.elevenKey) {
-      console.warn('[Voice] No ElevenLabs key configured');
-      return [];
-    }
-    try {
-      const res = await fetch('https://api.elevenlabs.io/v1/voices', {
-        headers: { 'xi-api-key': state.settings.elevenKey }
-      });
-      if (!res.ok) throw new Error(`API ${res.status}`);
-      const data = await res.json();
-      this._voices = (data.voices || []).map(v => ({
-        id: v.voice_id,
-        name: v.name,
-        category: v.category || 'premade',
-        language: v.labels?.language || '',
-        gender: v.labels?.gender || '',
-        accent: v.labels?.accent || '',
-        age: v.labels?.age || '',
-        useCase: v.labels?.use_case || '',
-        description: v.labels?.description || '',
-        previewUrl: v.preview_url || ''
-      }));
-      console.log(`[Voice] Loaded ${this._voices.length} voices from ElevenLabs`);
-    } catch (err) {
-      console.error('[Voice] Failed to load voices:', err);
-      // Fallback preset voices
-      this._voices = [
-        { id: 'uScy1bXtKz8vPzfdFsFw', name: 'Antonio Farina', category: 'cloned', language: 'it', gender: 'male', accent: 'italian', age: 'middle-aged', useCase: 'conversational', description: 'Expressive, warm', previewUrl: '' },
-        { id: 'CiwzbDpaN3pQXjTgx3ML', name: 'Aida', category: 'cloned', language: 'it', gender: 'female', accent: 'italian', age: 'middle-aged', useCase: 'conversational', description: 'Sultry', previewUrl: '' },
-        { id: 'HuK8QKF35exsCh2e7fLT', name: 'Carmelo La Rosa', category: 'cloned', language: 'it', gender: 'male', accent: 'italian', age: 'middle-aged', useCase: 'e-learning', description: 'Professional', previewUrl: '' },
-        { id: 'ImsA1Fn5TNc843fFdz99', name: 'Davide', category: 'cloned', language: 'it', gender: 'male', accent: 'italian', age: 'young', useCase: 'social media', description: 'Young', previewUrl: '' },
-        { id: '8KInRSd4DtD5L5gK7itu', name: 'Giusy Giarry', category: 'cloned', language: 'it', gender: 'female', accent: 'sicilian', age: 'middle-aged', useCase: 'conversational', description: 'Conversational', previewUrl: '' },
-        { id: 'jHaMmf5SfxgmUrgRYbqt', name: 'Carlo', category: 'cloned', language: 'it', gender: 'male', accent: 'italian', age: 'middle-aged', useCase: 'general', description: 'Italian', previewUrl: '' },
-      ];
-    }
-    return this._voices;
-  },
+/* ---- VOICE MODULE SENTINEL ---- */
+if (typeof Voice === 'undefined') { console.error('[COBRA] Voice module not loaded! Check modules/voice.js'); }
+/* ---- END SENTINEL ---- */
 
-  getFilteredVoices(lang) {
-    if (!lang) return this._voices;
-    const l = lang.toLowerCase();
-    return this._voices.filter(v =>
-      v.language.toLowerCase().includes(l) ||
-      v.accent.toLowerCase().includes(l)
-    );
-  },
-
-  populateVoiceSelect(langFilter) {
-    const select = document.getElementById('voiceSelect');
-    if (!select) return;
-    const voices = langFilter ? this.getFilteredVoices(langFilter) : this._voices;
-    const currentVoiceId = state.settings.selectedVoiceId || 'uScy1bXtKz8vPzfdFsFw';
-
-    select.innerHTML = '';
-    if (voices.length === 0) {
-      select.innerHTML = '<option value="">Nessuna voce trovata</option>';
-      return;
-    }
-    voices.forEach(v => {
-      const opt = document.createElement('option');
-      opt.value = v.id;
-      opt.textContent = `${v.name} (${v.gender || '?'}, ${v.language || '?'}${v.accent ? ', ' + v.accent : ''})`;
-      if (v.id === currentVoiceId) opt.selected = true;
-      select.appendChild(opt);
-    });
-
-    // Show voice info
-    this.updateVoiceInfo(select.value);
-  },
-
-  updateVoiceInfo(voiceId) {
-    const info = document.getElementById('voiceInfo');
-    if (!info) return;
-    const voice = this._voices.find(v => v.id === voiceId);
-    if (voice) {
-      info.textContent = `${voice.name} — ${voice.category} | ${voice.gender} | ${voice.language} | ${voice.useCase || 'general'} | ${voice.description || ''}`;
-    } else {
-      info.textContent = '';
-    }
-  },
-
-  async previewVoice(voiceId) {
-    if (!voiceId || !state.settings.elevenKey) return;
-    // Stop any currently playing audio
-    if (this._currentAudio) { this._currentAudio.pause(); this._currentAudio = null; }
-
-    const voice = this._voices.find(v => v.id === voiceId);
-    // Try preview URL first
-    if (voice?.previewUrl) {
-      this._currentAudio = new Audio(voice.previewUrl);
-      this._currentAudio.play();
-      return;
-    }
-
-    // Generate a short TTS sample
-    try {
-      const sampleText = state.settings.language === 'it'
-        ? 'Ciao! Sono la tua voce COBRA. Come posso aiutarti oggi?'
-        : 'Hello! I am your COBRA voice assistant. How can I help you today?';
-
-      const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'xi-api-key': state.settings.elevenKey
-        },
-        body: JSON.stringify({
-          text: sampleText,
-          model_id: state.settings.voiceModel || 'eleven_multilingual_v2',
-          voice_settings: { stability: 0.5, similarity_boost: 0.75 }
-        })
-      });
-
-      if (res.ok) {
-        const blob = await res.blob();
-        this._currentAudio = new Audio(URL.createObjectURL(blob));
-        this._currentAudio.play();
-      }
-    } catch (e) {
-      console.error('[Voice] Preview error:', e);
-    }
-  },
-
-  async speak(text) {
-    if (!state.settings.voice) return;
-    if (!text || text.trim().length < 2) return;
-    console.log('[Voice] Speaking:', text.substring(0, 80) + '...');
-
-    // Try ElevenLabs first
-    if (state.settings.elevenKey) {
-      try {
-        const voiceId = state.settings.selectedVoiceId || 'uScy1bXtKz8vPzfdFsFw';
-        const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'xi-api-key': state.settings.elevenKey
-          },
-          body: JSON.stringify({
-            text: text.substring(0, 2000),
-            model_id: state.settings.voiceModel || 'eleven_multilingual_v2',
-            voice_settings: {
-              stability: 0.5,
-              similarity_boost: 0.75,
-              speed: parseFloat(state.settings.voiceSpeed || '1.0')
-            }
-          })
-        });
-
-        if (response.ok) {
-          const blob = await response.blob();
-          console.log('[Voice] ElevenLabs audio blob size:', blob.size);
-          if (this._currentAudio) { this._currentAudio.pause(); this._currentAudio = null; }
-          const audioUrl = URL.createObjectURL(blob);
-          this._currentAudio = new Audio(audioUrl);
-          this._currentAudio.playbackRate = parseFloat(state.settings.voiceSpeed || '1.0');
-          this._currentAudio.onplay = () => console.log('[Voice] Audio playing');
-          this._currentAudio.onerror = (e) => {
-            console.error('[Voice] Audio play error:', e);
-            this._speakFallback(text);
-          };
-          await this._currentAudio.play();
-          return;
-        } else {
-          const errText = await response.text().catch(() => '');
-          console.error('[Voice] ElevenLabs error:', response.status, errText);
-        }
-      } catch (e) {
-        console.error('[Voice] ElevenLabs TTS error:', e);
-      }
-    }
-
-    // Fallback: Web Speech API (free, works in Chrome)
-    this._speakFallback(text);
-  },
-
-  _speakFallback(text) {
-    if (!('speechSynthesis' in window)) {
-      console.warn('[Voice] No speechSynthesis available');
-      return;
-    }
-    console.log('[Voice] Using Web Speech API fallback');
-    window.speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(text.substring(0, 500));
-    utter.lang = state.settings.language === 'it' ? 'it-IT' : 'en-US';
-    utter.rate = parseFloat(state.settings.voiceSpeed || '1.0');
-    // Try to find an Italian voice
-    const voices = window.speechSynthesis.getVoices();
-    const itVoice = voices.find(v => v.lang.startsWith('it'));
-    if (itVoice) utter.voice = itVoice;
-    window.speechSynthesis.speak(utter);
-  },
-
-  _injectionRunning: false,
-
-  // ── WALKIE-TALKIE MODE ──
-  // Press mic → starts recording, text fills input live
-  // Press mic again OR press Send → stops recording, sends text
-  // No auto-send, no silence timer. User controls everything.
-
-  startListening() {
-    if (this._injectionRunning || state.voiceActive) return;
-
-    const lang = state.settings.language === 'it' ? 'it-IT' : 'en-US';
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      try {
-        state.recognition = new SpeechRecognition();
-        state.recognition.lang = lang;
-        state.recognition.continuous = true;
-        state.recognition.interimResults = true;
-        state.recognition.maxAlternatives = 1;
-
-        // Safety max: 2 minutes then auto-stop (but NO auto-send)
-        this._voiceTimeout = setTimeout(() => {
-          if (state.voiceActive) Voice.stopListening();
-        }, 120000);
-
-        state.recognition.onresult = (event) => {
-          let fullTranscript = '';
-          for (let i = 0; i < event.results.length; i++) {
-            fullTranscript += event.results[i][0].transcript;
-          }
-          const chatInput = document.getElementById('chatInput');
-          if (chatInput) {
-            chatInput.value = fullTranscript;
-            chatInput.style.height = 'auto';
-            chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
-          }
-        };
-
-        state.recognition.onerror = (event) => {
-          console.warn('[Voice] Error:', event.error);
-          if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-            state.recognition = null;
-            if (this._voiceTimeout) { clearTimeout(this._voiceTimeout); this._voiceTimeout = null; }
-            Voice._startListeningViaInjection(lang);
-          } else if (event.error !== 'aborted') {
-            // no-speech or other — just keep listening, don't stop
-          }
-        };
-
-        state.recognition.onend = () => {
-          // Chrome kills recognition randomly — restart if user hasn't stopped
-          if (state.voiceActive) {
-            try { state.recognition?.start(); } catch { Voice.stopListening(); }
-          }
-        };
-
-        state.recognition.start();
-        state.voiceActive = true;
-        this._updateMicUI(true);
-        return;
-      } catch (e) {
-        console.warn('[Voice] Direct failed:', e.message);
-        state.recognition = null;
-      }
-    }
-
-    // Fallback: inject into active tab
-    this._startListeningViaInjection(lang);
-  },
-
-  async _startListeningViaInjection(lang) {
-    if (this._injectionRunning) return;
-    this._injectionRunning = true;
-    state.voiceActive = true;
-    this._updateMicUI(true);
-
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab?.id || !tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://') || tab.url.startsWith('about:')) {
-        Chat.addMessage('system', 'Naviga su un sito web per usare il microfono.');
-        Voice.stopListening();
-        return;
-      }
-
-      // Injection fallback: still walkie-talkie style but no live preview
-      // Records until 2 min max, user stops from sidepanel mic button
-      const results = await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: (lang) => {
-          return new Promise((resolve) => {
-            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SR) { resolve({ error: 'SpeechRecognition non disponibile' }); return; }
-            const rec = new SR();
-            rec.lang = lang;
-            rec.continuous = true;
-            rec.interimResults = false;
-            let fullText = '';
-            const maxTimeout = setTimeout(() => { rec.stop(); }, 120000);
-
-            // Listen for stop signal from sidepanel
-            const handler = (event) => {
-              if (event.data?.__cobra_voice_stop) {
-                window.removeEventListener('message', handler);
-                rec.stop();
-              }
-            };
-            window.addEventListener('message', handler);
-
-            rec.onresult = (e) => {
-              for (let i = e.resultIndex; i < e.results.length; i++) {
-                if (e.results[i].isFinal) fullText += e.results[i][0].transcript + ' ';
-              }
-            };
-            rec.onerror = (e) => {
-              clearTimeout(maxTimeout);
-              window.removeEventListener('message', handler);
-              resolve({ error: e.error });
-            };
-            rec.onend = () => {
-              clearTimeout(maxTimeout);
-              window.removeEventListener('message', handler);
-              resolve({ text: fullText.trim() || null });
-            };
-            rec.start();
-          });
-        },
-        args: [lang || 'it-IT']
-      });
-
-      const result = results?.[0]?.result;
-      if (result?.text) {
-        const chatInput = document.getElementById('chatInput');
-        if (chatInput) chatInput.value = result.text;
-        // Don't auto-send — user presses Send or mic again
-      } else if (result?.error && result.error !== 'no-speech') {
-        Chat.addMessage('system', `Errore microfono: ${result.error}`);
-      }
-    } catch (e) {
-      console.error('[Voice] Injection error:', e);
-      Chat.addMessage('system', 'Errore microfono. Naviga su un sito e riprova.');
-    }
-
-    Voice.stopListening();
-  },
-
-  _updateMicUI(listening) {
-    const micBtn = document.getElementById('micBtn');
-    const chatMicBtn = document.getElementById('chatMicBtn');
-    const indicator = document.getElementById('listeningIndicator');
-    const listeningText = document.getElementById('listeningText');
-
-    if (listening) {
-      if (micBtn) { micBtn.classList.add('listening'); micBtn.title = 'Registrando... clicca per fermare'; }
-      if (chatMicBtn) chatMicBtn.classList.add('listening');
-      if (indicator) indicator.classList.add('active');
-      if (listeningText) listeningText.textContent = '🔴 Registrazione — parla, poi premi invio';
-    } else {
-      if (micBtn) { micBtn.classList.remove('listening'); micBtn.title = 'Microfono (walkie-talkie)'; }
-      if (chatMicBtn) chatMicBtn.classList.remove('listening');
-      if (indicator) indicator.classList.remove('active');
-    }
-  },
-
-  stopListening() {
-    if (this._voiceTimeout) { clearTimeout(this._voiceTimeout); this._voiceTimeout = null; }
-    if (state.recognition) {
-      try { state.recognition.onend = null; state.recognition.stop(); } catch {}
-      state.recognition = null;
-    }
-    state.voiceActive = false;
-    this._injectionRunning = false;
-    this._updateMicUI(false);
-  },
-
-  // Send whatever is in the input and stop recording
-  sendAndStop() {
-    const chatInput = document.getElementById('chatInput');
-    const text = chatInput?.value?.trim();
-    this.stopListening();
-    if (text) {
-      Chat.send(text);
-      if (chatInput) chatInput.value = '';
-    }
-  },
-
-  toggleListening() {
-    if (state.voiceActive) {
-      // Pressing mic while recording → stop recording, text stays in input
-      this.stopListening();
-    } else {
-      this.startListening();
-    }
-  },
-
-  // Generate a short conversational voice reply instead of reading full text
-  async speakConversational(fullText) {
-    if (!state.settings.voice || !state.settings.elevenKey) return;
-    // If text is already short (under 200 chars), speak it directly
-    if (fullText.length <= 200) {
-      this.speak(fullText);
-      return;
-    }
-    // Otherwise, ask the AI to generate a brief spoken summary
-    try {
-      const response = await chrome.runtime.sendMessage({
-        type: 'VOICE_SUMMARY',
-        payload: {
-          text: fullText.substring(0, 1500),
-          context: 'conversazione vocale con operatore'
-        }
-      });
-      const summary = response?.summary;
-      if (summary && summary.length > 5) {
-        this.speak(summary);
-      } else {
-        // Fallback: speak first 2 sentences
-        const sentences = fullText.match(/[^.!?]+[.!?]+/g) || [fullText];
-        this.speak(sentences.slice(0, 2).join(' ').substring(0, 300));
-      }
-    } catch (e) {
-      // Fallback: first 2 sentences
-      const sentences = fullText.match(/[^.!?]+[.!?]+/g) || [fullText];
-      this.speak(sentences.slice(0, 2).join(' ').substring(0, 300));
-    }
-  }
-};
+// Voice → modules/voice.js (430 lines extracted)
 
 // ============================================================
 // CHAT ENGINE — Updated for multi-agent orchestration
@@ -782,7 +336,7 @@ const Chat = {
       if (/^\s*[\{\[]/.test(content) && /[\}\]]\s*$/.test(content) && content.length > 300) {
         try {
           const parsed = JSON.parse(content);
-          if (parsed.error) content = `Errore: ${parsed.error}`;
+          if (parsed.error) { content = `Errore: ${parsed.error}`; Toast.error(parsed.error); }
           else if (parsed.ok) content = parsed.message || 'Fatto.';
           else content = 'Sto lavorando...';
         } catch { /* not JSON, show as-is */ }
@@ -889,6 +443,7 @@ const Chat = {
     this.showStopBtn(false);
     state._waitingForResponse = false;
     this.addMessage('ai', 'Operazione interrotta.');
+    Toast.warning('Operazione interrotta');
   },
 
   showStopBtn(show) {
@@ -1731,340 +1286,7 @@ function renderAIView() {
   if (leaderDisplay && leader) leaderDisplay.textContent = '⭐ ' + leader.name;
 }
 
-// ============================================================
-// COMMUNICATION HUB — View rendering & handlers
-// ============================================================
-let commActiveChannel = 'email';
-
-// ============================================================
-// COMMS VIEW — Messaging Platform
-// ============================================================
-const CommChat = {
-  activeChannel: 'whatsapp',
-  activeContact: null,
-
-  init() {
-    // Channel tabs
-    document.querySelectorAll('.comm-tab').forEach(btn => {
-      btn.onclick = () => {
-        this.activeChannel = btn.dataset.channel;
-        document.querySelectorAll('.comm-tab').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        this.showChannelView();
-      };
-    });
-
-    // Back button
-    document.getElementById('commBackBtn')?.addEventListener('click', () => this.showContactList());
-
-    // Sync button — loads chat list from WhatsApp Web
-    document.getElementById('commSyncBtn')?.addEventListener('click', () => this.syncContacts());
-
-    // Refresh chat — reload messages from active conversation
-    document.getElementById('commRefreshChat')?.addEventListener('click', () => this.loadActiveMessages());
-
-    // Send message in chat
-    document.getElementById('commChatSendBtn')?.addEventListener('click', () => this.sendChatMessage());
-    document.getElementById('commChatInput')?.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.sendChatMessage(); }
-    });
-
-    // New chat button
-    document.getElementById('commNewChatBtn')?.addEventListener('click', () => this.newChat());
-
-    // Search filter
-    document.getElementById('commSearchContacts')?.addEventListener('input', (e) => this.filterContacts(e.target.value));
-
-    // Email send
-    document.getElementById('commSendEmailBtn')?.addEventListener('click', () => this.sendEmail());
-
-    // LinkedIn send
-    document.getElementById('commSendLiBtn')?.addEventListener('click', () => this.sendLinkedIn());
-  },
-
-  showChannelView() {
-    const contactList = document.getElementById('commContactList');
-    const chatView = document.getElementById('commChatView');
-    const emailView = document.getElementById('commEmailView');
-    const linkedinView = document.getElementById('commLinkedinView');
-
-    // Hide all
-    [contactList, chatView, emailView, linkedinView].forEach(el => { if (el) el.style.display = 'none'; });
-
-    if (this.activeChannel === 'whatsapp') {
-      if (contactList) contactList.style.display = 'flex';
-      this.loadContacts();
-    } else if (this.activeChannel === 'email') {
-      if (emailView) emailView.style.display = 'block';
-      this.loadEmailInbox();
-    } else if (this.activeChannel === 'linkedin') {
-      if (linkedinView) linkedinView.style.display = 'block';
-    }
-  },
-
-  // ── WhatsApp Contacts ──
-  async loadContacts() {
-    const container = document.getElementById('commContactItems');
-    if (!container) return;
-
-    // Load from cache first
-    chrome.runtime.sendMessage({ action: 'COMM_WA_GET_CHATS' }, (res) => {
-      if (!res?.success) return;
-      const chats = res.chats || {};
-      this.renderContactList(chats);
-    });
-  },
-
-  async syncContacts() {
-    const syncBtn = document.getElementById('commSyncBtn');
-    if (syncBtn) { syncBtn.disabled = true; syncBtn.textContent = '...'; }
-
-    chrome.runtime.sendMessage({ action: 'COMM_WA_CHAT_LIST' }, (res) => {
-      if (syncBtn) { syncBtn.disabled = false; syncBtn.textContent = 'Sync'; }
-      if (res?.success && res.chats) {
-        // Convert scraped list to stored format
-        chrome.runtime.sendMessage({ action: 'COMM_WA_GET_CHATS' }, (existing) => {
-          const chats = existing?.chats || {};
-          for (const c of res.chats) {
-            const key = c.name.replace(/[^a-zA-Z0-9\s]/g, '').trim();
-            if (!chats[key]) chats[key] = { name: c.name, messages: [], lastTs: Date.now() };
-            chats[key].lastMsg = c.lastMsg;
-            chats[key].time = c.time;
-            chats[key].unread = c.unread;
-          }
-          chrome.storage.local.set({ comm_wa_chats: chats }, () => {
-            this.renderContactList(chats);
-          });
-        });
-      } else {
-        Chat.addMessage('system', res?.error || 'Apri web.whatsapp.com per sincronizzare le chat.');
-      }
-    });
-  },
-
-  renderContactList(chats) {
-    const container = document.getElementById('commContactItems');
-    if (!container) return;
-
-    const sorted = Object.entries(chats).sort((a, b) => (b[1].lastTs || 0) - (a[1].lastTs || 0));
-
-    if (!sorted.length) { container.innerHTML = ''; return; }
-
-    container.innerHTML = sorted.map(([key, chat]) => {
-      const initial = (chat.name || '?').charAt(0).toUpperCase();
-      const name = sanitizeHTML(chat.name || key);
-      const preview = sanitizeHTML(chat.lastMsg || (chat.messages?.length ? chat.messages[chat.messages.length - 1]?.text?.slice(0, 50) : '') || '');
-      const time = sanitizeHTML(chat.time || '');
-      const unreadDot = chat.unread ? '<div class="comm-contact-badge"></div>' : '';
-
-      return `<div class="comm-contact-row" data-key="${sanitizeHTML(key)}" data-name="${name}">
-        <div class="comm-contact-avatar">${initial}</div>
-        <div class="comm-contact-body">
-          <div class="comm-contact-name">${name}</div>
-          <div class="comm-contact-preview">${preview}</div>
-        </div>
-        <div class="comm-contact-meta">
-          <div class="comm-contact-time">${time}</div>
-          ${unreadDot}
-        </div>
-      </div>`;
-    }).join('');
-
-    // Click handler
-    container.querySelectorAll('.comm-contact-row').forEach(row => {
-      row.onclick = () => this.openChat(row.dataset.key, row.dataset.name);
-    });
-  },
-
-  filterContacts(query) {
-    const rows = document.querySelectorAll('.comm-contact-row');
-    const q = (query || '').toLowerCase();
-    rows.forEach(row => {
-      const name = (row.dataset.name || '').toLowerCase();
-      row.style.display = !q || name.includes(q) ? 'flex' : 'none';
-    });
-  },
-
-  // ── Open Chat ──
-  openChat(key, name) {
-    this.activeContact = { key, name };
-    document.getElementById('commContactList').style.display = 'none';
-    document.getElementById('commChatView').style.display = 'flex';
-    document.getElementById('commChatName').textContent = name || key;
-    document.getElementById('commChatStatus').textContent = '';
-
-    // Load cached messages
-    chrome.runtime.sendMessage({ action: 'COMM_WA_GET_CHATS' }, (res) => {
-      const chats = res?.chats || {};
-      const chat = chats[key];
-      if (chat?.messages?.length) {
-        this.renderMessages(chat.messages);
-      } else {
-        document.getElementById('commChatMessages').innerHTML = '';
-      }
-    });
-
-    // Also try to open in WhatsApp and refresh
-    chrome.runtime.sendMessage({ action: 'COMM_WA_OPEN_CHAT', name }, () => {
-      // After opening, wait a bit then scrape messages
-      setTimeout(() => this.loadActiveMessages(), 2000);
-    });
-  },
-
-  showContactList() {
-    this.activeContact = null;
-    document.getElementById('commChatView').style.display = 'none';
-    document.getElementById('commContactList').style.display = 'flex';
-  },
-
-  async loadActiveMessages() {
-    if (!this.activeContact) return;
-    const refreshBtn = document.getElementById('commRefreshChat');
-    if (refreshBtn) { refreshBtn.disabled = true; refreshBtn.textContent = '...'; }
-
-    chrome.runtime.sendMessage({ action: 'COMM_WA_MESSAGES' }, (res) => {
-      if (refreshBtn) { refreshBtn.disabled = false; refreshBtn.textContent = 'Aggiorna'; }
-      if (res?.success && res.messages) {
-        this.renderMessages(res.messages);
-        if (res.chatName) {
-          document.getElementById('commChatName').textContent = res.chatName;
-        }
-      }
-    });
-  },
-
-  renderMessages(messages) {
-    const container = document.getElementById('commChatMessages');
-    if (!container) return;
-
-    container.innerHTML = messages.map(m => {
-      const cls = m.from === 'me' ? 'comm-msg-out' : 'comm-msg-in';
-      const text = sanitizeHTML(m.text || '');
-      const time = sanitizeHTML(m.time || '');
-      return `<div class="comm-msg ${cls}">
-        <div>${text}</div>
-        ${time ? `<div class="comm-msg-time">${time}</div>` : ''}
-      </div>`;
-    }).join('');
-
-    container.scrollTop = container.scrollHeight;
-  },
-
-  // ── Send Message ──
-  sendChatMessage() {
-    const input = document.getElementById('commChatInput');
-    const text = input?.value?.trim();
-    if (!text || !this.activeContact) return;
-
-    const name = this.activeContact.name;
-    input.value = '';
-
-    // Add message locally immediately
-    const container = document.getElementById('commChatMessages');
-    if (container) {
-      const el = document.createElement('div');
-      el.className = 'comm-msg comm-msg-out';
-      el.innerHTML = `<div>${sanitizeHTML(text)}</div><div class="comm-msg-time">Invio...</div>`;
-      container.appendChild(el);
-      container.scrollTop = container.scrollHeight;
-    }
-
-    // Send via WhatsApp injection
-    chrome.runtime.sendMessage({ action: 'COMM_SEND_WHATSAPP', phone: name, text }, (res) => {
-      if (res?.success) {
-        // Update the last message time
-        const lastMsg = container?.lastElementChild?.querySelector('.comm-msg-time');
-        if (lastMsg) lastMsg.textContent = new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-      }
-    });
-  },
-
-  newChat() {
-    const phone = prompt('Inserisci numero di telefono (es. +39335...)');
-    if (!phone) return;
-    this.openChat(phone.replace(/\D/g, ''), phone);
-  },
-
-  // ── Email ──
-  loadEmailInbox() {
-    chrome.runtime.sendMessage({ action: 'COMM_GET_EMAILS' }, (res) => {
-      const list = document.getElementById('commInboxList');
-      if (!list || !res?.success) return;
-      const emails = (res.emails || []).slice(0, 10);
-      if (!emails.length) { list.innerHTML = ''; return; }
-      list.innerHTML = emails.map(e => {
-        const fromName = sanitizeHTML((e.from || '').split('<')[0].trim() || 'Sconosciuto');
-        const initial = fromName.charAt(0).toUpperCase();
-        const subj = sanitizeHTML(e.subject || '(nessun oggetto)');
-        const dateStr = e.date ? new Date(e.date).toLocaleDateString('it-IT', {day:'2-digit',month:'short'}) : '';
-        return `<div class="comm-list-item">
-          <div class="comm-list-avatar">${initial}</div>
-          <div class="comm-list-body">
-            <div class="comm-list-from">${fromName}</div>
-            <div class="comm-list-snippet">${subj}</div>
-          </div>
-          <div class="comm-list-time">${dateStr}</div>
-        </div>`;
-      }).join('');
-    });
-
-    chrome.runtime.sendMessage({ action: 'COMM_GET_SENT_LOG' }, (res) => {
-      const el = document.getElementById('commSentLog');
-      if (!el || !res?.success) return;
-      const log = (res.log || []).slice(0, 5);
-      if (!log.length) { el.innerHTML = ''; return; }
-      el.innerHTML = log.map(l => {
-        const icon = l.channel === 'email' ? '📧' : l.channel === 'whatsapp' ? '💬' : '💼';
-        const time = new Date(l.sentAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-        return `<div class="comm-list-item">
-          <div class="comm-list-avatar">${icon}</div>
-          <div class="comm-list-body">
-            <div class="comm-list-from">${sanitizeHTML(l.recipient || '')}</div>
-            <div class="comm-list-snippet">${sanitizeHTML(l.preview || '')}</div>
-          </div>
-          <div class="comm-list-time">${time}</div>
-        </div>`;
-      }).join('');
-    });
-  },
-
-  sendEmail() {
-    const btn = document.getElementById('commSendEmailBtn');
-    const to = document.getElementById('commEmailTo')?.value?.trim();
-    const subject = document.getElementById('commEmailSubject')?.value?.trim();
-    const body = document.getElementById('commEmailBody')?.value?.trim();
-    if (!to) return;
-    if (btn) { btn.disabled = true; btn.textContent = 'Invio...'; }
-    chrome.runtime.sendMessage({ action: 'COMM_SEND_EMAIL', to, subject, body }, (res) => {
-      if (btn) { btn.disabled = false; btn.textContent = 'Invia Email'; }
-      if (res?.success) {
-        document.getElementById('commEmailTo').value = '';
-        document.getElementById('commEmailSubject').value = '';
-        document.getElementById('commEmailBody').value = '';
-        this.loadEmailInbox();
-      }
-    });
-  },
-
-  sendLinkedIn() {
-    const btn = document.getElementById('commSendLiBtn');
-    const recipient = document.getElementById('commLiRecipient')?.value?.trim();
-    const text = document.getElementById('commLiText')?.value?.trim();
-    if (!recipient || !text) return;
-    if (btn) { btn.disabled = true; btn.textContent = 'Invio...'; }
-    chrome.runtime.sendMessage({ action: 'COMM_SEND_LINKEDIN', recipient, text }, (res) => {
-      if (btn) { btn.disabled = false; btn.textContent = 'Invia LinkedIn'; }
-      if (res?.success) {
-        document.getElementById('commLiRecipient').value = '';
-        document.getElementById('commLiText').value = '';
-      }
-    });
-  }
-};
-
-function renderCommsView() {
-  CommChat.showChannelView();
-}
+// CommChat + renderCommsView → modules/comm-chat.js (250 lines extracted)
 
 // ============================================================
 // SUB-TABS
@@ -2334,6 +1556,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   Habits.trackSession();
   initSubTabs();
   CommChat.init();
+
+  // Tooltip guidance system
+  if (typeof CobraTooltips !== 'undefined') CobraTooltips.init();
 
   // Settings button opens settings view
   document.getElementById('settingsBtn')?.addEventListener('click', () => switchView('settings'));
@@ -3340,6 +2565,46 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else {
         Chat.addMessage('ai', 'Nessuna risposta. Riprova.');
       }
+      return;
+    }
+
+    // STREAMING — token-by-token AI response rendering
+    if (msg.type === 'CHAT_STREAM_CHUNK') {
+      const container = document.getElementById('chatMessages');
+      if (!container) return;
+
+      if (msg.payload?.done) {
+        // Stream complete — finalize
+        const streamEl = container.querySelector('.cobra-stream-active');
+        if (streamEl) {
+          streamEl.classList.remove('cobra-stream-active');
+          streamEl.classList.add('cobra-stream-done');
+        }
+        return;
+      }
+
+      // Find or create streaming bubble
+      let streamBubble = container.querySelector('.cobra-stream-active');
+      if (!streamBubble) {
+        streamBubble = document.createElement('div');
+        streamBubble.className = 'msg msg-ai cobra-stream-active';
+        const avatarImg = document.createElement('img');
+        avatarImg.className = 'chat-avatar';
+        avatarImg.src = 'icons/agents/lei-active.gif';
+        avatarImg.alt = 'COBRA';
+        avatarImg.draggable = false;
+        streamBubble.appendChild(avatarImg);
+        const textSpan = document.createElement('span');
+        textSpan.className = 'msg-text stream-text';
+        streamBubble.appendChild(textSpan);
+        container.appendChild(streamBubble);
+      }
+
+      const textEl = streamBubble.querySelector('.stream-text');
+      if (textEl && msg.payload?.fullText) {
+        textEl.textContent = msg.payload.fullText;
+      }
+      container.scrollTop = container.scrollHeight;
       return;
     }
 

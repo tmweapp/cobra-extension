@@ -1,0 +1,28 @@
+{
+  "banking": {
+    "domains": [
+      "paypal.com", "stripe.com", "wise.com", "revolut.com",
+      "visa.com", "mastercard.com", "n26.com",
+      "fineco.it", "intesasanpaolo.com", "unicredit.it",
+      "bnl.it", "mediolanum.it", "postepay.it"
+    ],
+    "rule": "read-only",
+    "description": "Banking domains: write operations blocked"
+  },
+  "social": {
+    "domains": [
+      "linkedin.com", "facebook.com", "instagram.com",
+      "whatsapp.com", "web.whatsapp.com",
+      "x.com", "twitter.com", "tiktok.com"
+    ],
+    "rule": "confirmation-required",
+    "description": "Social domains: write operations require confirmation"
+  },
+  "erp": {
+    "domains": [
+      "erp.tmwe.it", "odoo.com", "sap.com"
+    ],
+    "rule": "standard",
+    "description": "ERP domains: standard access with logging"
+  }
+}

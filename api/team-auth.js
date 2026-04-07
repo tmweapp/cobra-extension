@@ -57,9 +57,14 @@ async function verifyPassword(password, hash) {
 /**
  * Sign JWT token
  */
-function signJWT(payload) {
+function signJWT(payload, expiresInSeconds = 86400) {
+  const now = Math.floor(Date.now() / 1000);
   const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
-  const body = Buffer.from(JSON.stringify({ ...payload, iat: Math.floor(Date.now() / 1000) })).toString('base64url');
+  const body = Buffer.from(JSON.stringify({
+    ...payload,
+    iat: now,
+    exp: now + expiresInSeconds
+  })).toString('base64url');
   const message = `${header}.${body}`;
 
   const hmac = crypto.createHmac('sha256', JWT_SECRET);
@@ -87,6 +92,12 @@ function verifyJWT(token) {
     if (signatureB64 !== expectedSignature) return null;
 
     const payload = JSON.parse(Buffer.from(bodyB64, 'base64url').toString());
+
+    // Check token expiration
+    if (payload.exp && Math.floor(Date.now() / 1000) > payload.exp) {
+      return null;
+    }
+
     return payload;
   } catch (e) {
     return null;

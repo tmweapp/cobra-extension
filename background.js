@@ -28,12 +28,15 @@ try {
   console.error('[COBRA] Error loading core utils:', e);
 }
 
-// 1b. Result wrapper + Error codes + Policy (no dependencies, used by everything)
+// 1b. Result wrapper + Error codes + Policy + Guard + Contracts (no dependencies, used by everything)
 try {
   importScripts(
     'cobra-result.js',
     'cobra-error-codes.js',
     'cobra-policy.js',
+    'cobra-guard.js',
+    'cobra-contracts.js',
+    'cobra-audit.js',
     'cobra-selector-stats.js',
     'cobra-jobs.js',
     'cobra-supervisor.js'
@@ -53,6 +56,17 @@ try {
   console.error('[COBRA] Error loading infrastructure:', e);
 }
 
+// 3. Chat Memory & Hierarchical System (new modules)
+try {
+  importScripts(
+    'chat-memory.js',
+    'temp-docs.js',
+    'three-tier-response.js'
+  );
+} catch (e) {
+  console.error('[COBRA] Error loading chat memory modules:', e);
+}
+
 // 3. Functional modules (may depend on core utils)
 try {
   importScripts(
@@ -68,13 +82,25 @@ try {
   console.error('[COBRA] Error loading functional modules:', e);
 }
 
-// 3b. Tool layer (extracted from bg-chat.js)
+// 3b. Session & Library Modules (new)
+try {
+  importScripts(
+    'session-diary.js',
+    'remote-library.js',
+    'consolidation-scheduler.js'
+  );
+} catch (e) {
+  console.error('[COBRA] Error loading session & library modules:', e);
+}
+
+// 3c. Tool layer (extracted from bg-chat.js)
 try {
   importScripts(
     'tool-registry.js',
     'tool-safety.js',
     'tool-executor.js',
-    'provider-router.js'
+    'provider-router.js',
+    'cobra-streaming.js'
   );
 } catch (e) {
   console.error('[COBRA] Error loading tool layer:', e);
@@ -128,6 +154,10 @@ self.cobraOrchestrator = cobraOrchestrator;
 const cobraDecisionEngine = new DecisionEngine(cobraKB, cobraGate, cobraConversation);
 self.decisionEngine = cobraDecisionEngine;
 
+// Session Diary & Remote Library — new modules for session management
+const cobraSessionDiary = new SessionDiary('generic', cobraKB, self.Brain);
+self.cobraSessionDiary = cobraSessionDiary;
+
 // 4b. Communication Hub (config + autodiscover + handlers)
 try {
   importScripts('comm-config.js', 'comm-autodiscover.js', 'bg-comms.js');
@@ -144,7 +174,8 @@ try {
     'bg-orchestrator.js',
     'bg-kb.js',
     'bg-jobs.js',
-    'bg-files.js'
+    'bg-files.js',
+    'bg-session.js'
   );
 } catch (e) {
   console.error('[COBRA] Error loading handler modules:', e);
@@ -353,6 +384,13 @@ CobraRouter.registerActions({
   'PJOB_ACTIVE_RUN': async () => self.CobraJobs ? { run: self.CobraJobs.getActiveRun() } : { error: 'Jobs not loaded' },
   // ── v5.2 Supervisor ──
   'SUPERVISOR_HEALTH': async () => self.CobraSupervisor ? self.CobraSupervisor.getHealthReport() : { error: 'Supervisor not loaded' },
+  // ── v5.2 Guard (rate limit + circuit breaker) ──
+  'GUARD_STATS': async () => self.CobraGuard ? self.CobraGuard.getStats() : { error: 'Guard not loaded' },
+  'GUARD_RESET': async () => { if (self.CobraGuard) { self.CobraGuard.reset(); return { ok: true }; } return { error: 'Guard not loaded' }; },
+  // ── v5.2 Audit Log ──
+  'AUDIT_QUERY': async (msg) => self.CobraAudit ? { entries: await self.CobraAudit.query(msg.filter || {}) } : { error: 'Audit not loaded' },
+  'AUDIT_STATS': async () => self.CobraAudit ? await self.CobraAudit.getStats() : { error: 'Audit not loaded' },
+  'AUDIT_EXPORT': async (msg) => self.CobraAudit ? await self.CobraAudit.export(msg.filter || {}) : { error: 'Audit not loaded' },
   // ── v5.2 Selector Stats ──
   'SELECTOR_STATS_SUMMARY': async () => self.CobraSelectorStats ? self.CobraSelectorStats.getSummary() : { error: 'SelectorStats not loaded' },
   'SELECTOR_STATS_RANKED': async (msg) => self.CobraSelectorStats ? { ranked: self.CobraSelectorStats.getRanked(msg.domain) } : { error: 'SelectorStats not loaded' },
@@ -445,6 +483,8 @@ function connectNativeBridge() {
       self.CobraPolicy?.init().catch(e => console.warn('[COBRA] Policy init:', e.message)),
       self.CobraSelectorStats?.init().catch(e => console.warn('[COBRA] SelectorStats init:', e.message)),
       self.CobraJobs?.init().catch(e => console.warn('[COBRA] Jobs init:', e.message)),
+      cobraSessionDiary.init().catch(e => console.warn('[COBRA] SessionDiary init:', e.message)),
+      CobraConsolidationScheduler.init().catch(e => console.warn('[COBRA] ConsolidationScheduler init:', e.message)),
     ]).then(() => console.log('[COBRA] v5.2 modules initialized')).catch(() => {});
 
     // KB maintenance: recalculate scores + garbage collect on startup

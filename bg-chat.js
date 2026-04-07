@@ -62,7 +62,7 @@ async function _processChatMessage(payload) {
     }
 
     // Get current tab info
-    let currentPage = { url: '', title: '', domain: '' };
+    const currentPage = { url: '', title: '', domain: '' };
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (tab) {

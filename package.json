@@ -1,0 +1,39 @@
+{
+  "name": "cobra-extension",
+  "version": "5.2.0",
+  "description": "COBRA - AI Co-Pilot Browser. Chrome extension for intelligent web scraping, multi-agent orchestration and browser automation.",
+  "private": true,
+  "scripts": {
+    "lint": "eslint . --ext .js",
+    "lint:fix": "eslint . --ext .js --fix",
+    "format": "prettier --write '**/*.{js,json,html,css,md}'",
+    "format:check": "prettier --check '**/*.{js,json,html,css,md}'",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:report": "playwright show-report",
+    "build": "node scripts/build.js",
+    "prebuild": "npm run lint",
+    "sbom": "cyclonedx-npm --output-file sbom.json",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0",
+    "eslint-plugin-security": "^2.1.0",
+    "eslint-plugin-sonarjs": "^0.24.0",
+    "prettier": "^3.3.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.2.0",
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
+    "@cyclonedx/cyclonedx-npm": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

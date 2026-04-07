@@ -87,7 +87,7 @@ self.CobraRouter.registerTypes({
 
       // Execute agent instruction using AI if available
       sendProgress(80);
-      let result = {
+      const result = {
         ok: true,
         sessionId,
         type: 'agent',

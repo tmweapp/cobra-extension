@@ -541,7 +541,7 @@
                              el.querySelector('span[data-testid="msg-time"]') ||
                              el.querySelector('.copyable-text[data-pre-plain-text]');
 
-              let text = textEl?.textContent || '';
+              const text = textEl?.textContent || '';
               let time = timeEl?.textContent || '';
 
               // Try to get time from data attribute

@@ -311,7 +311,7 @@ async function callDirectAI(provider, apiKey, model, systemPrompt, messages, opt
             const sameToolCount = toolCallLog.filter(t => t === toolKey).length;
             if (sameToolCount >= 3) {
               console.warn(`[COBRA] Circular tool loop detected: ${fc.functionCall.name} called 3+ times with same args. Breaking.`);
-              let parsed = { error: 'Circular loop: strumento chiamato ripetutamente con gli stessi parametri. Prova un approccio diverso.' };
+              const parsed = { error: 'Circular loop: strumento chiamato ripetutamente con gli stessi parametri. Prova un approccio diverso.' };
               responseParts.push({ functionResponse: { name: fc.functionCall.name, response: parsed } });
               break;
             }
@@ -355,7 +355,73 @@ async function callDirectAI(provider, apiKey, model, systemPrompt, messages, opt
   }
 }
 
-self.callDirectAI = callDirectAI;
-self.COBRA_TOOLS = COBRA_TOOLS;
+/**
+ * Auto-fallback wrapper: se il provider principale fallisce,
+ * prova automaticamente i provider di backup in ordine.
+ * Ordine fallback: primario → groq → openai → gemini → anthropic
+ */
+async function callAIWithFallback(primaryProvider, primaryKey, primaryModel, systemPrompt, messages, options = {}) {
+  // Build fallback chain from available settings
+  const settings = options._settings || {};
+  const chain = [
+    { provider: primaryProvider, key: primaryKey, model: primaryModel }
+  ];
 
-console.log('[provider-router.js] Loaded: callDirectAI registered');
+  // Add fallbacks (skip primary to avoid duplicate)
+  const fallbacks = [
+    { provider: 'groq', key: settings.groqKey, model: settings.groqModel || 'llama-3.3-70b-versatile' },
+    { provider: 'openai', key: settings.openaiKey, model: settings.openaiModel || 'gpt-4o-mini' },
+    { provider: 'gemini', key: settings.geminiKey, model: settings.geminiModel || 'gemini-2.0-flash' },
+    { provider: 'anthropic', key: settings.anthropicKey, model: settings.anthropicModel || 'claude-sonnet-4-20250514' },
+  ];
+
+  for (const fb of fallbacks) {
+    if (fb.provider !== primaryProvider && fb.key) {
+      chain.push(fb);
+    }
+  }
+
+  for (let i = 0; i < chain.length; i++) {
+    const { provider, key, model } = chain[i];
+    if (!key) continue;
+
+    try {
+      if (i > 0) {
+        console.warn(`[COBRA Fallback] Provider ${chain[i - 1].provider} fallito, provo ${provider}...`);
+        emitThinking(`Provider non disponibile, passo a ${provider}...`);
+        if (self.CobraAudit) self.CobraAudit.log({
+          action: 'AI_FALLBACK', category: 'system',
+          details: `${chain[i - 1].provider} → ${provider}`
+        });
+      }
+
+      const result = await callDirectAI(provider, key, model, systemPrompt, messages, options);
+      if (result !== null && result !== undefined && result !== '') {
+        return result;
+      }
+      // null/empty = provider failed silently, try next
+    } catch (err) {
+      console.error(`[COBRA Fallback] ${provider} error:`, err.message);
+      if (self.CobraGuard) self.CobraGuard.registerFailure('api.' + provider + '.com', 'AI_CALL');
+      continue;
+    }
+  }
+
+  // All providers failed
+  if (self.CobraAudit) self.CobraAudit.log({
+    action: 'AI_ALL_FAILED', category: 'system', result: 'fail',
+    details: `Tried ${chain.length} providers, all failed`
+  });
+  return 'Mi dispiace, tutti i provider AI sono temporaneamente non disponibili. Riprova tra qualche minuto.';
+}
+
+self.emitThinking = emitThinking;
+self.getThinkingBefore = getThinkingBefore;
+self.getThinkingAfter = getThinkingAfter;
+self.callDirectAI = callDirectAI;
+self.callAIWithFallback = callAIWithFallback;
+if (typeof COBRA_TOOLS !== 'undefined') {
+  self.COBRA_TOOLS = COBRA_TOOLS;
+}
+
+console.log('[provider-router.js] Loaded: callDirectAI + callAIWithFallback registered');

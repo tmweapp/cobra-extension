@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>COBRA — Linen Theme</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FBF8F4;--paper-2:#F5F0E8;--paper-3:#EDE6D9;
+  --ink:#1F2024;--ink-2:#5C5D63;--ink-3:#9A9CA3;
+  --accent:#C44536;--accent-2:#E07856;--terra:#D4956A;
+  --sage:#7A9477;--gold:#C8A560;--cream:#F0E5D0;
+  --line:#E5DDD0;--line-2:#D8CFBE;
+  --shadow-soft:0 1px 2px rgba(31,32,36,0.04),0 8px 24px rgba(31,32,36,0.06);
+  --shadow-card:0 2px 8px rgba(31,32,36,0.04);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{font-family:'Inter',sans-serif;background:var(--paper);color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.serif{font-family:'Fraunces',serif;font-feature-settings:"ss01"}
+
+.app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+.sidebar{background:var(--paper-2);border-right:1px solid var(--line);padding:32px 20px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:14px;margin-bottom:40px;padding-bottom:24px;border-bottom:1px solid var(--line)}
+.brand-mark{width:44px;height:44px;background:var(--accent);color:var(--paper);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:600;font-size:22px}
+.brand-name{font-family:'Fraunces',serif;font-weight:600;font-size:22px;letter-spacing:-0.02em}
+.brand-sub{font-size:11px;color:var(--ink-3);font-style:italic;margin-top:-2px}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav-section{font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.12em;margin:20px 12px 8px;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:14px;padding:11px 14px;border-radius:8px;cursor:pointer;color:var(--ink-2);font-size:14px;transition:all 0.2s}
+.nav-item:hover{background:var(--paper-3);color:var(--ink)}
+.nav-item.active{background:var(--ink);color:var(--paper)}
+.nav-icon{width:18px;text-align:center;font-size:15px}
+
+.main{padding:0;background:var(--paper)}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:24px 48px;border-bottom:1px solid var(--line);background:var(--paper);position:sticky;top:0;z-index:10}
+.workspace-pill{display:flex;align-items:center;gap:12px;padding:10px 18px;background:var(--cream);border:1px solid var(--line-2);border-radius:30px;cursor:pointer}
+.workspace-dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.workspace-name{font-weight:500;font-size:14px}
+.top-actions{display:flex;gap:12px}
+.icon-btn{width:40px;height:40px;border-radius:50%;background:var(--paper-2);border:1px solid var(--line);color:var(--ink-2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all 0.2s}
+.icon-btn:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+.view{display:none;padding:48px;max-width:1200px;animation:fade 0.4s}
+.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.view-header{margin-bottom:40px}
+.view-eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:var(--accent);font-weight:600;margin-bottom:8px}
+.view-title{font-family:'Fraunces',serif;font-size:48px;font-weight:500;letter-spacing:-0.03em;line-height:1.05;color:var(--ink)}
+.view-sub{color:var(--ink-2);margin-top:14px;font-size:16px;max-width:600px}
+
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow-card);transition:all 0.3s}
+.card:hover{box-shadow:var(--shadow-soft);transform:translateY(-2px)}
+
+/* CHAT */
+.chat-container{display:grid;grid-template-rows:auto 1fr auto;gap:24px;height:calc(100vh - 130px)}
+.agent-bar{display:flex;align-items:center;gap:14px;padding:16px 20px;background:var(--cream);border-radius:14px;border:1px solid var(--line)}
+.agent-count{font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.1em;font-weight:600}
+.agent-pill{padding:6px 14px;background:var(--paper);border-radius:20px;font-size:12px;display:flex;align-items:center;gap:8px;border:1px solid var(--line)}
+.agent-status{width:6px;height:6px;border-radius:50%;background:var(--sage)}
+.page-context{margin-left:auto;font-size:12px;color:var(--ink-2);font-style:italic}
+.messages{overflow-y:auto;padding-right:8px;display:flex;flex-direction:column;gap:20px}
+.msg{max-width:75%;padding:18px 22px;border-radius:18px;font-size:15px;line-height:1.6}
+.msg-user{align-self:flex-end;background:var(--ink);color:var(--paper);border-bottom-right-radius:6px}
+.msg-ai{align-self:flex-start;background:var(--paper-2);border:1px solid var(--line);border-bottom-left-radius:6px}
+.msg-meta{font-size:11px;color:var(--ink-3);margin-top:10px;display:flex;gap:10px;align-items:center;font-style:italic}
+.msg-tier{padding:3px 10px;background:var(--cream);border-radius:8px;font-size:10px;text-transform:uppercase;font-style:normal;font-weight:600}
+.reasoning-trace{margin-top:14px;padding:14px 16px;background:var(--cream);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;font-size:12px;color:var(--ink-2)}
+.trace-step{padding:3px 0;font-family:'Fraunces',serif;font-style:italic}
+.input-zone{padding:20px;background:var(--paper-2);border:1px solid var(--line);border-radius:18px}
+.input-row{display:flex;align-items:center;gap:12px}
+.chat-input{flex:1;background:transparent;border:none;color:var(--ink);font-family:inherit;font-size:15px;outline:none;padding:8px;resize:none}
+.chat-input::placeholder{color:var(--ink-3);font-style:italic}
+.send-btn{padding:12px 24px;background:var(--accent);border:none;border-radius:30px;color:var(--paper);font-weight:600;cursor:pointer;font-family:inherit;font-size:13px}
+.send-btn:hover{background:#A03828}
+
+/* Tabs */
+.subtabs{display:flex;gap:0;margin-bottom:32px;border-bottom:1px solid var(--line)}
+.subtab{padding:14px 20px;background:transparent;border:none;color:var(--ink-3);cursor:pointer;font-family:inherit;font-size:14px;font-weight:500;border-bottom:2px solid transparent;transition:all 0.2s;margin-bottom:-1px}
+.subtab:hover{color:var(--ink)}
+.subtab.active{color:var(--ink);border-bottom-color:var(--accent)}
+.subview{display:none}
+.subview.active{display:block}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+
+.stat{padding:24px;background:var(--paper);border:1px solid var(--line);border-radius:14px}
+.stat-value{font-family:'Fraunces',serif;font-size:36px;font-weight:500;letter-spacing:-0.02em;color:var(--ink)}
+.stat-label{font-size:12px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.08em;margin-top:6px;font-weight:600}
+
+.item{display:flex;align-items:center;gap:18px;padding:18px 20px;background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;transition:all 0.2s}
+.item:hover{background:var(--paper-2);border-color:var(--line-2)}
+.item-icon{width:42px;height:42px;border-radius:10px;background:var(--cream);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.item-body{flex:1;min-width:0}
+.item-title{font-weight:600;font-size:14px;margin-bottom:3px}
+.item-meta{font-size:12px;color:var(--ink-3);display:flex;gap:10px}
+.item-tag{padding:3px 10px;background:var(--cream);border-radius:10px;font-size:10px;color:var(--accent);font-weight:600}
+
+.tier-badge{padding:4px 12px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em}
+.tier-milestone{background:var(--accent);color:var(--paper)}
+.tier-hot{background:var(--sage);color:var(--paper)}
+.tier-cold{background:var(--paper-3);color:var(--ink-3)}
+
+/* Briefing */
+.briefing{padding:36px;background:linear-gradient(135deg,var(--cream),var(--paper));border:1px solid var(--line);border-radius:20px;position:relative;overflow:hidden}
+.briefing::before{content:'""';position:absolute;top:-40px;left:24px;font-family:'Fraunces',serif;font-size:200px;color:var(--line);line-height:1}
+.briefing-header{display:flex;align-items:flex-start;gap:18px;margin-bottom:24px;position:relative}
+.briefing-icon{width:54px;height:54px;border-radius:50%;background:var(--accent);color:var(--paper);display:flex;align-items:center;justify-content:center;font-size:24px}
+.briefing-title{font-family:'Fraunces',serif;font-size:26px;font-weight:600;letter-spacing:-0.02em}
+.briefing-meta{font-size:12px;color:var(--ink-3);font-style:italic;margin-top:4px}
+.briefing-section{margin-top:24px;position:relative}
+.briefing-section h4{font-family:'Fraunces',serif;font-size:13px;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent);margin-bottom:8px;font-weight:700}
+.briefing-section p{font-size:14px;color:var(--ink);line-height:1.7;font-family:'Fraunces',serif}
+
+/* Workspace */
+.workspace-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px}
+.ws-card{padding:32px 24px;background:var(--paper);border:1px solid var(--line);border-radius:16px;cursor:pointer;text-align:center;transition:all 0.3s;position:relative}
+.ws-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-soft);border-color:var(--accent)}
+.ws-card.detected{background:var(--cream);border-color:var(--accent);border-width:2px}
+.ws-emoji{font-size:42px;margin-bottom:14px;display:block}
+.ws-name{font-family:'Fraunces',serif;font-size:18px;font-weight:600;margin-bottom:6px}
+.ws-desc{font-size:12px;color:var(--ink-3);font-style:italic}
+.ws-detected-badge{position:absolute;top:12px;right:12px;padding:4px 10px;background:var(--accent);color:var(--paper);font-size:9px;font-weight:700;border-radius:20px;text-transform:uppercase;letter-spacing:0.05em}
+
+/* Library */
+.library-tree{display:flex;flex-direction:column;gap:6px}
+.lib-node{padding:14px 18px;background:var(--paper);border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;gap:14px;cursor:pointer;font-size:13px}
+.lib-node:hover{background:var(--paper-2)}
+.lib-level-0{margin-left:0}
+.lib-level-1{margin-left:24px}
+.lib-level-2{margin-left:48px}
+.lib-level-3{margin-left:72px}
+.lib-icon{font-size:18px}
+.lib-meta{margin-left:auto;color:var(--ink-3);font-size:11px;font-style:italic}
+
+/* Settings */
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;background:var(--paper);border:1px solid var(--line);border-radius:14px;margin-bottom:10px}
+.setting-info h4{font-size:14px;font-weight:600;margin-bottom:3px}
+.setting-info p{font-size:12px;color:var(--ink-3)}
+.toggle{width:48px;height:26px;background:var(--paper-3);border-radius:13px;position:relative;cursor:pointer;transition:all 0.3s;border:1px solid var(--line)}
+.toggle.on{background:var(--accent);border-color:var(--accent)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;background:var(--paper);border-radius:50%;transition:all 0.3s}
+.toggle.on::after{left:24px}
+.input-field{padding:11px 16px;background:var(--paper);border:1px solid var(--line);border-radius:10px;color:var(--ink);font-family:inherit;font-size:14px;width:240px}
+
+/* Comms */
+.comm-channel{display:flex;align-items:center;gap:18px;padding:24px;background:var(--paper);border:1px solid var(--line);border-radius:16px;cursor:pointer;transition:all 0.3s;margin-bottom:12px}
+.comm-channel:hover{transform:translateX(6px);box-shadow:var(--shadow-soft)}
+.comm-icon{width:54px;height:54px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;color:white}
+.comm-icon.wa{background:linear-gradient(135deg,#25D366,#128C7E)}
+.comm-icon.em{background:linear-gradient(135deg,#EA4335,#FBBC05)}
+.comm-icon.li{background:linear-gradient(135deg,#0A66C2,#004182)}
+.comm-info h4{font-family:'Fraunces',serif;font-size:18px;font-weight:600}
+.comm-info p{font-size:12px;color:var(--ink-3);margin-top:4px;font-style:italic}
+.comm-badge{margin-left:auto;padding:6px 14px;background:var(--accent);color:var(--paper);border-radius:20px;font-size:11px;font-weight:700}
+
+/* Errors */
+.error-card{padding:24px;background:#FCF4F2;border:1px solid #E8C5BD;border-radius:16px;display:flex;gap:18px;align-items:flex-start;margin-bottom:12px}
+.error-icon{width:46px;height:46px;border-radius:50%;background:var(--accent);color:var(--paper);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.error-body h4{font-family:'Fraunces',serif;font-size:16px;font-weight:600;color:var(--accent)}
+.error-body p{font-size:13px;color:var(--ink-2);margin:6px 0 14px;line-height:1.6}
+.error-actions{display:flex;gap:10px}
+.btn-pill{padding:9px 18px;background:var(--paper);border:1px solid var(--line-2);border-radius:30px;color:var(--ink);font-size:12px;cursor:pointer;font-family:inherit;font-weight:500}
+.btn-pill.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+/* Toast */
+.toast-warn{position:fixed;bottom:32px;right:32px;padding:20px 24px;background:var(--paper);border:1px solid var(--line);border-radius:18px;box-shadow:0 16px 48px rgba(31,32,36,0.12);display:flex;align-items:center;gap:16px;max-width:400px;z-index:100;animation:slide 0.3s}
+@keyframes slide{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.toast-icon{font-size:28px;color:var(--accent)}
+.toast-body{flex:1}
+.toast-title{font-family:'Fraunces',serif;font-weight:600;font-size:15px;color:var(--ink)}
+.toast-text{font-size:12px;color:var(--ink-2);margin-top:4px;font-style:italic}
+.toast-progress{position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--accent);border-radius:0 0 18px 18px;animation:countdown 3s linear}
+@keyframes countdown{from{width:100%}to{width:0%}}
+
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:var(--paper-2)}
+::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:5px;border:2px solid var(--paper-2)}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">C</div>
+      <div>
+        <div class="brand-name">Cobra</div>
+        <div class="brand-sub">Linen edition</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">Lavoro quotidiano</div>
+      <div class="nav-item active" data-view="chat"><span class="nav-icon">💬</span>Chat</div>
+      <div class="nav-item" data-view="briefing"><span class="nav-icon">📋</span>Briefing</div>
+      <div class="nav-item" data-view="workspace"><span class="nav-icon">🎯</span>Workspace</div>
+      <div class="nav-section">Memoria</div>
+      <div class="nav-item" data-view="archivio"><span class="nav-icon">🗄️</span>Archivio</div>
+      <div class="nav-item" data-view="milestones"><span class="nav-icon">⭐</span>Milestones</div>
+      <div class="nav-item" data-view="library"><span class="nav-icon">📚</span>Biblioteca</div>
+      <div class="nav-section">Comunicazione</div>
+      <div class="nav-item" data-view="comms"><span class="nav-icon">📡</span>Canali</div>
+      <div class="nav-section">Sistema</div>
+      <div class="nav-item" data-view="ai"><span class="nav-icon">🧠</span>AI Settings</div>
+      <div class="nav-item" data-view="settings"><span class="nav-icon">⚙️</span>Settings</div>
+      <div class="nav-item" data-view="errors"><span class="nav-icon">🛡️</span>Errors</div>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="workspace-pill"><div class="workspace-dot"></div><span class="workspace-name">Fatturazione</span><span style="color:var(--ink-3);font-size:11px">▾</span></div>
+      <div class="top-actions">
+        <button class="icon-btn">🎤</button><button class="icon-btn">🔊</button><button class="icon-btn">🔔</button><button class="icon-btn">👤</button>
+      </div>
+    </header>
+
+    <!-- CHAT -->
+    <div class="view active" id="view-chat">
+      <div class="chat-container">
+        <div class="agent-bar">
+          <span class="agent-count">3 agents at work</span>
+          <div class="agent-pill"><div class="agent-status"></div>Analyzer</div>
+          <div class="agent-pill"><div class="agent-status"></div>Planner</div>
+          <div class="agent-pill"><div class="agent-status"></div>Executor</div>
+          <div class="page-context">on booking.com/hotel/...</div>
+        </div>
+        <div class="messages">
+          <div class="msg msg-user">Verifica le fatture insolute del cliente Acme Spa di questo trimestre</div>
+          <div class="msg msg-ai">
+            Ho identificato 3 fatture insolute per Acme Spa nel Q1 2026: F-2026-0142 (€4.200, scadenza 15/02), F-2026-0188 (€2.850, scadenza 28/02), F-2026-0231 (€6.100, scadenza 12/03). Totale esposizione: €13.150. Suggerisco invio sollecito formale per le prime due e contatto telefonico per la terza dato l'importo.
+            <div class="msg-meta"><span class="msg-tier">Full</span>847 token · Claude Sonnet 4.5</div>
+            <div class="reasoning-trace">
+              <div class="trace-step">analizzo l'intento — verifica insoluti, confidence 94%</div>
+              <div class="trace-step">workspace: fatturazione (rilevato dal contesto)</div>
+              <div class="trace-step">consulto knowledge base — 12 milestone applicabili</div>
+              <div class="trace-step">eseguo query_invoices — success rate 98% su acme.com</div>
+              <div class="trace-step">verifico — 3 record consistenti</div>
+            </div>
+          </div>
+          <div class="msg msg-user">Prepara i solleciti ma aspetta conferma prima di inviarli</div>
+          <div class="msg msg-ai">Bozze pronte. Le trovi nella sezione Drafts. Confermo prima dell'invio come richiesto.<div class="msg-meta"><span class="msg-tier">Synthetic</span></div></div>
+        </div>
+        <div class="input-zone">
+          <div class="input-row">
+            <textarea class="chat-input" placeholder="Cosa devo fare oggi per te..."></textarea>
+            <button class="icon-btn">📎</button><button class="icon-btn">🎙️</button>
+            <button class="send-btn">Invia</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BRIEFING -->
+    <div class="view" id="view-briefing">
+      <div class="view-header">
+        <div class="view-eyebrow">Sessione del 7 Aprile 2026</div>
+        <h1 class="view-title">Briefing operativo</h1>
+        <p class="view-sub">Ogni mattina il sistema legge la knowledge base del workspace attivo e ti prepara il briefing. È il primo prompt che l'AI vedrà.</p>
+      </div>
+      <div class="briefing">
+        <div class="briefing-header">
+          <div class="briefing-icon">📋</div>
+          <div>
+            <div class="briefing-title">Memoria utile resume</div>
+            <div class="briefing-meta">Aggiornato 2 minuti fa · 743 token · 12 milestone integrate</div>
+          </div>
+        </div>
+        <div class="briefing-section"><h4>Contesto attivo</h4><p>Fine trimestre Q1 2026. Focus su recupero crediti e chiusura fatturazione mese di marzo. Cliente prioritario: Acme Spa (esposizione €13.150 in 3 fatture).</p></div>
+        <div class="briefing-section"><h4>Regole milestone</h4><p>Clienti farmaceutici → scadenza tassativa entro il 5 del mese. Importi >€10.000 → contatto telefonico obbligatorio. Intercompany → sempre approvazione manuale.</p></div>
+        <div class="briefing-section"><h4>Esempi recenti</h4><p>Ieri completato sollecito Bravo Logistics (€8.400) → pagato in 4h. Approccio: telefono + email formale stesso giorno.</p></div>
+        <div class="briefing-section"><h4>Attenzioni</h4><p>Charlie Industries ha cambiato CFO il 20/03. Verificare nuovi referenti. Delta SRL ha piano di rientro: rate €1.500/mese fino a giugno.</p></div>
+      </div>
+      <div class="grid-3" style="margin-top:24px"><div class="stat"><div class="stat-value">12</div><div class="stat-label">Milestone integrate</div></div><div class="stat"><div class="stat-value">47</div><div class="stat-label">Eventi precedenti</div></div><div class="stat"><div class="stat-value">€13k</div><div class="stat-label">Esposizione tracciata</div></div></div>
+    </div>
+
+    <!-- WORKSPACE -->
+    <div class="view" id="view-workspace">
+      <div class="view-header">
+        <div class="view-eyebrow">Mansione attiva</div>
+        <h1 class="view-title">Su cosa lavoriamo<br>oggi?</h1>
+        <p class="view-sub">Il sistema rileva automaticamente il workspace dal contesto. Puoi confermare o cambiare. Ogni workspace ha la sua memoria isolata.</p>
+      </div>
+      <div class="workspace-grid">
+        <div class="ws-card detected"><span class="ws-emoji">📑</span><div class="ws-name">Fatturazione</div><div class="ws-desc">Fatture, scadenze, IVA</div><span class="ws-detected-badge">94% match</span></div>
+        <div class="ws-card"><span class="ws-emoji">💰</span><div class="ws-name">Credito</div><div class="ws-desc">Insoluti, solleciti</div></div>
+        <div class="ws-card"><span class="ws-emoji">🤝</span><div class="ws-name">Commerciale</div><div class="ws-desc">Lead, offerte, trattative</div></div>
+        <div class="ws-card"><span class="ws-emoji">💎</span><div class="ws-name">Pricing</div><div class="ws-desc">Listini, sconti, margini</div></div>
+        <div class="ws-card"><span class="ws-emoji">🌐</span><div class="ws-name">Generic</div><div class="ws-desc">Senza specializzazione</div></div>
+      </div>
+      <div class="grid-3" style="margin-top:40px">
+        <div class="card"><div class="view-eyebrow">Workspace</div><div class="serif" style="font-size:24px;font-weight:600;margin-top:6px">Fatturazione</div><div style="font-size:12px;color:var(--ink-3);margin-top:4px;font-style:italic">147 regole · 12 milestone · 3 documenti remoti</div></div>
+        <div class="card"><div class="view-eyebrow">Sessione</div><div class="serif" style="font-size:24px;font-weight:600;margin-top:6px">2h 14min</div><div style="font-size:12px;color:var(--ink-3);margin-top:4px;font-style:italic">47 eventi · 12 messaggi attivi</div></div>
+        <div class="card"><div class="view-eyebrow">Token</div><div class="serif" style="font-size:24px;font-weight:600;margin-top:6px">8.247 / 50.000</div><div style="font-size:12px;color:var(--ink-3);margin-top:4px;font-style:italic">16% budget · €0.18 stimato</div></div>
+      </div>
+    </div>
+
+    <!-- ARCHIVIO -->
+    <div class="view" id="view-archivio">
+      <div class="view-header">
+        <div class="view-eyebrow">Memoria a quattro livelli</div>
+        <h1 class="view-title">Archivio</h1>
+        <p class="view-sub">Working · Hot · Milestone · Cold. Ogni memoria ha il suo tier e il suo destino.</p>
+      </div>
+      <div class="subtabs">
+        <button class="subtab active" data-sub="memoria">Memoria</button>
+        <button class="subtab" data-sub="prompts">Prompts</button>
+        <button class="subtab" data-sub="kb">Knowledge Base</button>
+        <button class="subtab" data-sub="jobs">Tasks</button>
+        <button class="subtab" data-sub="files">Files</button>
+        <button class="subtab" data-sub="cronologia">Cronologia</button>
+      </div>
+      <div class="subview active" id="sub-memoria">
+        <div class="grid-4" style="margin-bottom:24px">
+          <div class="stat"><div class="stat-value">147</div><div class="stat-label">Totali</div></div>
+          <div class="stat"><div class="stat-value">12</div><div class="stat-label">Milestone</div></div>
+          <div class="stat"><div class="stat-value">89</div><div class="stat-label">Hot</div></div>
+          <div class="stat"><div class="stat-value">46</div><div class="stat-label">Cold</div></div>
+        </div>
+        <div class="item"><div class="item-icon">⭐</div><div class="item-body"><div class="item-title">Clienti farmaceutici: scadenza tassativa giorno 5</div><div class="item-meta"><span class="item-tag">fatturazione</span>confermata 8 volte · uso 47</div></div><span class="tier-badge tier-milestone">Milestone</span></div>
+        <div class="item"><div class="item-icon">⭐</div><div class="item-body"><div class="item-title">Importi &gt;€10k: contatto telefonico obbligatorio</div><div class="item-meta"><span class="item-tag">credito</span>confermata 12 volte · uso 89</div></div><span class="tier-badge tier-milestone">Milestone</span></div>
+        <div class="item"><div class="item-icon">🔥</div><div class="item-body"><div class="item-title">Acme Spa: pagamenti via bonifico 30/60 giorni</div><div class="item-meta"><span class="item-tag">cliente</span>updated 2gg fa</div></div><span class="tier-badge tier-hot">Hot</span></div>
+        <div class="item"><div class="item-icon">❄️</div><div class="item-body"><div class="item-title">Vecchio template fattura proforma 2024</div><div class="item-meta"><span class="item-tag">template</span>ultimo uso 187gg fa</div></div><span class="tier-badge tier-cold">Cold</span></div>
+      </div>
+      <div class="subview" id="sub-prompts">
+        <div class="grid-2">
+          <div class="card"><div class="serif" style="font-size:18px;font-weight:600;margin-bottom:6px">Sollecito formale tier A</div><p style="font-size:13px;color:var(--ink-2);margin-bottom:12px">Template per clienti enterprise con pagamento abituale</p><div class="item-meta"><span class="item-tag">fatturazione</span>uso: 34</div></div>
+          <div class="card"><div class="serif" style="font-size:18px;font-weight:600;margin-bottom:6px">Verifica scadenze quotidiana</div><p style="font-size:13px;color:var(--ink-2);margin-bottom:12px">Routine mattutina per controllo fatture in scadenza</p><div class="item-meta"><span class="item-tag">fatturazione</span>uso: 89</div></div>
+          <div class="card"><div class="serif" style="font-size:18px;font-weight:600;margin-bottom:6px">Riconciliazione bancaria</div><p style="font-size:13px;color:var(--ink-2);margin-bottom:12px">Match estratto conto con fatture pagate</p><div class="item-meta"><span class="item-tag">credito</span>uso: 21</div></div>
+          <div class="card"><div class="serif" style="font-size:18px;font-weight:600;margin-bottom:6px">Analisi insoluti per età</div><p style="font-size:13px;color:var(--ink-2);margin-bottom:12px">Segmentazione 0-30/30-60/60-90/&gt;90 giorni</p><div class="item-meta"><span class="item-tag">credito</span>uso: 17</div></div>
+        </div>
+      </div>
+      <div class="subview" id="sub-kb">
+        <div class="grid-3" style="margin-bottom:20px"><div class="stat"><div class="stat-value">147</div><div class="stat-label">Regole</div></div><div class="stat"><div class="stat-value">5</div><div class="stat-label">Workspace</div></div><div class="stat"><div class="stat-value">23</div><div class="stat-label">Domini</div></div></div>
+        <div class="item"><div class="item-icon">📐</div><div class="item-body"><div class="item-title">Selettore: button[data-action="confirm-payment"]</div><div class="item-meta"><span class="item-tag">selector</span><span class="item-tag">acme.com</span></div></div><span class="tier-badge tier-hot">Hot</span></div>
+        <div class="item"><div class="item-icon">📐</div><div class="item-body"><div class="item-title">Pattern: scadenze farmaceutici sempre giorno 5</div><div class="item-meta"><span class="item-tag">pattern</span><span class="item-tag">farma</span></div></div><span class="tier-badge tier-milestone">Milestone</span></div>
+      </div>
+      <div class="subview" id="sub-jobs">
+        <div class="card"><div class="view-eyebrow">In esecuzione</div><div style="display:flex;align-items:center;gap:18px;margin-top:12px"><div style="width:60px;height:60px;border-radius:50%;background:var(--accent);color:var(--paper);display:flex;align-items:center;justify-content:center;font-size:26px">⚡</div><div style="flex:1"><div class="serif" style="font-size:18px;font-weight:600">Sollecito massivo Q1</div><div style="font-size:12px;color:var(--ink-3);margin-top:4px;font-style:italic">Step 4 di 7 · ETA 12 minuti</div><div style="height:6px;background:var(--paper-3);border-radius:3px;margin-top:10px;overflow:hidden"><div style="width:57%;height:100%;background:var(--accent)"></div></div></div></div></div>
+        <h3 class="view-eyebrow" style="margin:24px 0 12px">In coda</h3>
+        <div class="item"><div class="item-icon">⏳</div><div class="item-body"><div class="item-title">Export contabile mese marzo</div><div class="item-meta">Pianificato per le 18:00</div></div></div>
+        <div class="item"><div class="item-icon">⏳</div><div class="item-body"><div class="item-title">Backup KB settimanale</div><div class="item-meta">Pianificato per domenica</div></div></div>
+      </div>
+      <div class="subview" id="sub-files">
+        <button style="width:100%;padding:24px;background:var(--cream);border:1px dashed var(--accent);border-radius:14px;color:var(--accent);font-family:'Fraunces',serif;font-size:16px;font-weight:600;cursor:pointer;margin-bottom:20px">📂 Connetti cartella del computer</button>
+        <div class="grid-3" style="margin-bottom:20px"><div class="stat"><div class="stat-value">847</div><div class="stat-label">File</div></div><div class="stat"><div class="stat-value">2.4 GB</div><div class="stat-label">Spazio</div></div><div class="stat"><div class="stat-value">12</div><div class="stat-label">Sessioni temp</div></div></div>
+        <div class="item"><div class="item-icon">📄</div><div class="item-body"><div class="item-title">fatture_marzo_2026.xlsx</div><div class="item-meta">147 KB · ieri</div></div></div>
+        <div class="item"><div class="item-icon">📄</div><div class="item-body"><div class="item-title">solleciti_template.docx</div><div class="item-meta">28 KB · 3 giorni fa</div></div></div>
+        <div class="item"><div class="item-icon">📊</div><div class="item-body"><div class="item-title">analisi_insoluti_q1.pdf</div><div class="item-meta">1.2 MB · oggi</div></div></div>
+      </div>
+      <div class="subview" id="sub-cronologia">
+        <div class="item"><div class="item-icon">💬</div><div class="item-body"><div class="item-title">Verifica fatture insolute Acme</div><div class="item-meta">14 messaggi · 2h fa</div></div><span class="tier-badge tier-hot">Live</span></div>
+        <div class="item"><div class="item-icon">💬</div><div class="item-body"><div class="item-title">Sollecito Bravo Logistics</div><div class="item-meta">8 messaggi · ieri</div></div></div>
+        <div class="item"><div class="item-icon">💬</div><div class="item-body"><div class="item-title">Riconciliazione bancaria febbraio</div><div class="item-meta">23 messaggi · 3gg fa</div></div></div>
+      </div>
+    </div>
+
+    <!-- MILESTONES -->
+    <div class="view" id="view-milestones">
+      <div class="view-header">
+        <div class="view-eyebrow">Pietre miliari</div>
+        <h1 class="view-title">Milestones</h1>
+        <p class="view-sub">Sempre attive · mai consolidate · workspace fatturazione. Sono le regole che il sistema riconosce come fondamentali e include in ogni prompt.</p>
+      </div>
+      <div class="grid-2">
+        <div class="card"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><span style="font-size:24px">⭐</span><span class="tier-badge tier-milestone">M-001</span></div><div class="serif" style="font-size:20px;font-weight:600;margin-bottom:8px">Clienti farmaceutici giorno 5</div><p style="font-size:13px;color:var(--ink-2);line-height:1.7">Tutti i clienti del settore farmaceutico richiedono fatturazione tassativamente entro il giorno 5 del mese. Confermata 8 volte negli ultimi 6 mesi.</p><div style="margin-top:14px;font-size:11px;color:var(--ink-3);font-style:italic">creata 142gg fa · ultimo uso oggi</div></div>
+        <div class="card"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><span style="font-size:24px">⭐</span><span class="tier-badge tier-milestone">M-007</span></div><div class="serif" style="font-size:20px;font-weight:600;margin-bottom:8px">Soglia €10k = telefono prima</div><p style="font-size:13px;color:var(--ink-2);line-height:1.7">Per importi superiori a €10.000 è obbligatorio contatto telefonico prima di qualsiasi sollecito scritto. Confermata 12 volte.</p><div style="margin-top:14px;font-size:11px;color:var(--ink-3);font-style:italic">creata 89gg fa · ultimo uso 2gg fa</div></div>
+        <div class="card"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><span style="font-size:24px">⭐</span><span class="tier-badge tier-milestone">M-012</span></div><div class="serif" style="font-size:20px;font-weight:600;margin-bottom:8px">Intercompany approvazione manuale</div><p style="font-size:13px;color:var(--ink-2);line-height:1.7">Tutte le fatture intercompany passano da approvazione manuale, mai automatizzazione totale.</p><div style="margin-top:14px;font-size:11px;color:var(--ink-3);font-style:italic">creata 203gg fa · ultimo uso ieri</div></div>
+        <div class="card"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><span style="font-size:24px">⭐</span><span class="tier-badge tier-milestone">M-015</span></div><div class="serif" style="font-size:20px;font-weight:600;margin-bottom:8px">Delta SRL piano di rientro</div><p style="font-size:13px;color:var(--ink-2);line-height:1.7">Cliente in piano di rientro: rate da €1.500/mese fino a giugno 2026. Non sollecitare oltre.</p><div style="margin-top:14px;font-size:11px;color:var(--ink-3);font-style:italic">creata 34gg fa · ultimo uso oggi</div></div>
+      </div>
+    </div>
+
+    <!-- LIBRARY -->
+    <div class="view" id="view-library">
+      <div class="view-header">
+        <div class="view-eyebrow">Indice illimitato</div>
+        <h1 class="view-title">Biblioteca remota</h1>
+        <p class="view-sub">Documenti consolidati settimanalmente. L'AI non li legge mai tutti — usa l'indice per trovare le 20 righe rilevanti.</p>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:32px">
+        <input class="chat-input" placeholder="🔍 Deep search per tag, keyword, periodo..." style="flex:1;padding:16px 22px;background:var(--paper);border:1px solid var(--line);border-radius:30px;font-size:14px">
+        <button class="send-btn">Cerca</button>
+      </div>
+      <div class="grid-4" style="margin-bottom:32px">
+        <div class="stat"><div class="stat-value">347</div><div class="stat-label">Documenti</div></div>
+        <div class="stat"><div class="stat-value">4</div><div class="stat-label">Livelli</div></div>
+        <div class="stat"><div class="stat-value serif" style="font-size:42px">∞</div><div class="stat-label">Crescita</div></div>
+        <div class="stat"><div class="stat-value">12 MB</div><div class="stat-label">Dimensione</div></div>
+      </div>
+      <h3 class="view-eyebrow" style="margin-bottom:14px">Workspace fatturazione · albero documenti</h3>
+      <div class="library-tree">
+        <div class="lib-node lib-level-0"><span class="lib-icon">📚</span>Meta-Encyclopedia v3 · principi consolidati<span class="lib-meta">level 3 · 23 KB</span></div>
+        <div class="lib-node lib-level-1"><span class="lib-icon">📖</span>Encyclopedia 2025-Q4 · best practices annuali<span class="lib-meta">level 2 · 47 KB</span></div>
+        <div class="lib-node lib-level-2"><span class="lib-icon">📕</span>Libro Q4 2025 consolidato<span class="lib-meta">level 1 · 89 KB</span></div>
+        <div class="lib-node lib-level-3"><span class="lib-icon">📄</span>Settimana 47 · regole e diari<span class="lib-meta">level 0 · 12 KB</span></div>
+        <div class="lib-node lib-level-3"><span class="lib-icon">📄</span>Settimana 48 · regole e diari<span class="lib-meta">level 0 · 14 KB</span></div>
+        <div class="lib-node lib-level-2"><span class="lib-icon">📕</span>Libro Q1 2026 in corso<span class="lib-meta">level 1 · 34 KB</span></div>
+        <div class="lib-node lib-level-3"><span class="lib-icon">📄</span>Settimana 1-4 gennaio<span class="lib-meta">level 0 · 18 KB</span></div>
+      </div>
+    </div>
+
+    <!-- COMMS -->
+    <div class="view" id="view-comms">
+      <div class="view-header">
+        <div class="view-eyebrow">Hub multicanale</div>
+        <h1 class="view-title">Comunicazione</h1>
+        <p class="view-sub">WhatsApp · Email · LinkedIn integrati. Tutti i canali, una sola conversazione.</p>
+      </div>
+      <div class="comm-channel"><div class="comm-icon wa">💬</div><div class="comm-info"><h4>WhatsApp Business</h4><p>147 contatti · 23 chat attive</p></div><div class="comm-badge">3 nuovi</div></div>
+      <div class="comm-channel"><div class="comm-icon em">✉️</div><div class="comm-info"><h4>Email Gmail</h4><p>amministrazione@azienda.it</p></div><div class="comm-badge">12 da leggere</div></div>
+      <div class="comm-channel"><div class="comm-icon li">in</div><div class="comm-info"><h4>LinkedIn</h4><p>2.847 connessioni · 8 messaggi</p></div><div class="comm-badge">8 nuovi</div></div>
+      <h3 class="view-eyebrow" style="margin:32px 0 14px">Conversazioni recenti</h3>
+      <div class="item"><div class="item-icon" style="background:linear-gradient(135deg,#25D366,#128C7E);color:white">A</div><div class="item-body"><div class="item-title">Acme Spa · Marco Rossi (CFO)</div><div class="item-meta">"Confermo bonifico per F-2026-0142..." · 14 min fa</div></div></div>
+      <div class="item"><div class="item-icon" style="background:linear-gradient(135deg,#EA4335,#FBBC05);color:white">B</div><div class="item-body"><div class="item-title">Bravo Logistics · ufficio amministrativo</div><div class="item-meta">"Ricevuto sollecito, procediamo oggi..." · 2h fa</div></div></div>
+    </div>
+
+    <!-- AI SETTINGS -->
+    <div class="view" id="view-ai">
+      <div class="view-header"><div class="view-eyebrow">Provider, modelli, budget</div><h1 class="view-title">AI Settings</h1><p class="view-sub">Catena di fallback intelligente. Quando uno fallisce, il prossimo prende il testimone.</p></div>
+      <h3 class="view-eyebrow" style="margin-bottom:14px">Provider chain</h3>
+      <div class="item"><div class="item-icon" style="background:linear-gradient(135deg,#FF6B35,#F7931E);color:white">1</div><div class="item-body"><div class="item-title">OpenAI · gpt-4-turbo</div><div class="item-meta"><span class="item-tag">primario</span>4.247 token · score 0.94</div></div></div>
+      <div class="item"><div class="item-icon" style="background:linear-gradient(135deg,#FF4F00,#FF8C42);color:white">2</div><div class="item-body"><div class="item-title">Groq · llama-3.3-70b</div><div class="item-meta"><span class="item-tag">veloce</span>2.134 token · score 0.88</div></div></div>
+      <div class="item"><div class="item-icon" style="background:linear-gradient(135deg,#4285F4,#34A853);color:white">3</div><div class="item-body"><div class="item-title">Google · gemini-2-flash</div><div class="item-meta"><span class="item-tag">economico</span>1.866 token · score 0.82</div></div></div>
+      <div class="item"><div class="item-icon" style="background:linear-gradient(135deg,#D97757,#7C3AED);color:white">4</div><div class="item-body"><div class="item-title">Anthropic · claude-sonnet-4.5</div><div class="item-meta"><span class="item-tag">premium</span>0 token · score 0.97</div></div></div>
+      <h3 class="view-eyebrow" style="margin:28px 0 14px">Budget giornaliero</h3>
+      <div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><span class="serif" style="font-size:18px;font-weight:600">8.247 / 50.000</span><span style="color:var(--ink-3);font-size:13px;font-style:italic">16% · €0.18 stimato</span></div><div style="height:10px;background:var(--paper-3);border-radius:5px;overflow:hidden"><div style="width:16%;height:100%;background:var(--accent);border-radius:5px"></div></div></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="view" id="view-settings">
+      <div class="view-header"><div class="view-eyebrow">Preferenze</div><h1 class="view-title">Settings</h1></div>
+      <h3 class="view-eyebrow" style="margin-bottom:14px">Generali</h3>
+      <div class="setting-row"><div class="setting-info"><h4>Lingua</h4><p>Italiano (IT)</p></div><select class="input-field"><option>Italiano</option><option>English</option></select></div>
+      <div class="setting-row"><div class="setting-info"><h4>Tema</h4><p>Linen edition</p></div><select class="input-field"><option>Linen</option><option>Aurora</option><option>Carbon</option></select></div>
+      <div class="setting-row"><div class="setting-info"><h4>Reasoning trace</h4><p>Mostra come pensa l'AI</p></div><div class="toggle on"></div></div>
+      <h3 class="view-eyebrow" style="margin:28px 0 14px">Sicurezza</h3>
+      <div class="setting-row"><div class="setting-info"><h4>Tool warn-tier</h4><p>Conferma 3s per azioni medio-rischio</p></div><div class="toggle on"></div></div>
+      <div class="setting-row"><div class="setting-info"><h4>Audit log</h4><p>IndexedDB · 7 giorni · 10k entries</p></div><div class="toggle on"></div></div>
+      <div class="setting-row"><div class="setting-info"><h4>Circuit breaker</h4><p>5 fail → 30s cooldown</p></div><div class="toggle on"></div></div>
+      <h3 class="view-eyebrow" style="margin:28px 0 14px">Voce</h3>
+      <div class="setting-row"><div class="setting-info"><h4>ElevenLabs TTS</h4><p>Voce: Bella · italiana</p></div><div class="toggle on"></div></div>
+      <div class="setting-row"><div class="setting-info"><h4>Walkie-talkie</h4><p>Push-to-talk continuativo</p></div><div class="toggle"></div></div>
+    </div>
+
+    <!-- ERRORS -->
+    <div class="view" id="view-errors">
+      <div class="view-header"><div class="view-eyebrow">Boundary globale</div><h1 class="view-title">Errors &amp; Recovery</h1></div>
+      <div class="error-card"><div class="error-icon">⚠️</div><div class="error-body"><h4>Provider OpenAI: rate limit raggiunto</h4><p>Il provider primario ha raggiunto la quota oraria. Sistema in fallback automatico su Groq. Recovery stimato: 12 minuti.</p><div class="error-actions"><button class="btn-pill primary">Forza fallback</button><button class="btn-pill">Vedi log</button><button class="btn-pill">Ignora</button></div></div></div>
+      <div class="error-card"><div class="error-icon">🔌</div><div class="error-body"><h4>Selettore non trovato su acme.com</h4><p>Il selettore "button[data-action='confirm-payment']" non risponde. La pagina potrebbe essere stata aggiornata.</p><div class="error-actions"><button class="btn-pill primary">Re-discovery</button><button class="btn-pill">Disattiva regola</button></div></div></div>
+      <h3 class="view-eyebrow" style="margin:28px 0 14px">Statistiche</h3>
+      <div class="grid-4"><div class="stat"><div class="stat-value">2</div><div class="stat-label">Critical</div></div><div class="stat"><div class="stat-value">14</div><div class="stat-label">Warning</div></div><div class="stat"><div class="stat-value">87</div><div class="stat-label">Info</div></div><div class="stat"><div class="stat-value">99.4%</div><div class="stat-label">Uptime</div></div></div>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast-warn">
+  <div class="toast-icon">⚠</div>
+  <div class="toast-body">
+    <div class="toast-title">Azione warn-tier · invio email</div>
+    <div class="toast-text">Sto per inviare sollecito ad acme.com. Annulla entro 3s.</div>
+  </div>
+  <div class="toast-progress"></div>
+</div>
+
+<script>
+const navItems=document.querySelectorAll('.nav-item');
+const views=document.querySelectorAll('.view');
+navItems.forEach(n=>n.addEventListener('click',()=>{
+  navItems.forEach(x=>x.classList.remove('active'));
+  views.forEach(v=>v.classList.remove('active'));
+  n.classList.add('active');
+  const v=document.getElementById('view-'+n.dataset.view);
+  if(v)v.classList.add('active');
+}));
+const subtabs=document.querySelectorAll('.subtab');
+subtabs.forEach(s=>s.addEventListener('click',()=>{
+  document.querySelectorAll('.subtab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.subview').forEach(x=>x.classList.remove('active'));
+  s.classList.add('active');
+  document.getElementById('sub-'+s.dataset.sub).classList.add('active');
+}));
+
+/* THEME SWITCHER */
+const sw=document.createElement('div');
+sw.innerHTML=`<style>
+.theme-switcher{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);display:flex;gap:4px;padding:6px;background:#FBF8F4;border:1px solid #E5DDD0;border-radius:40px;z-index:9999;box-shadow:0 12px 40px rgba(31,32,36,0.1)}
+.theme-switcher a{display:flex;align-items:center;gap:8px;padding:9px 18px;border-radius:30px;text-decoration:none;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:#5C5D63;transition:all 0.25s}
+.theme-switcher a:hover{background:#F5F0E8;color:#1F2024}
+.theme-switcher a.active{background:#1F2024;color:#FBF8F4}
+.theme-dot{width:10px;height:10px;border-radius:50%}
+.dot-aurora{background:linear-gradient(135deg,#52bbff,#ff6ec4)}
+.dot-linen{background:#C44536}
+.dot-carbon{background:#FFD700}
+</style>
+<div class="theme-switcher">
+  <a href="aurora.html" data-t="aurora"><span class="theme-dot dot-aurora"></span>Aurora</a>
+  <a href="linen.html" class="active" data-t="linen"><span class="theme-dot dot-linen"></span>Linen</a>
+  <a href="carbon.html" data-t="carbon"><span class="theme-dot dot-carbon"></span>Carbon</a>
+</div>`;
+document.body.appendChild(sw);
+function syncHash(){const a=document.querySelector('.nav-item.active');if(a)location.hash=a.dataset.view}
+navItems.forEach(n=>n.addEventListener('click',syncHash));
+if(location.hash){const v=location.hash.slice(1);const t=document.querySelector('.nav-item[data-view="'+v+'"]');if(t)t.click()}
+document.querySelectorAll('.theme-switcher a:not(.active)').forEach(a=>{
+  a.addEventListener('click',e=>{if(location.hash)a.href=a.getAttribute('href')+location.hash});
+});
+</script>
+</body>
+</html>

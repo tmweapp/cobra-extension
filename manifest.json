@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
   "name": "COBRA",
-  "version": "5.2.0",
-  "description": "COBRA — AI Co-Pilot Browser. Scraping, Agent, Knowledge Base, Gate System, File Creator. Side Panel con memoria, apprendimento e intelligenza operativa.",
+  "version": "5.3.0",
+  "version_name": "5.3.0-beta1",
+  "description": "COBRA — AI Co-Pilot Browser. Memoria 4-tier, 3 temi, provider fallback. Closed beta.",
   "permissions": [
     "activeTab",
     "scripting",
@@ -26,7 +27,7 @@
     }
   },
   "side_panel": {
-    "default_path": "sidepanel.html"
+    "default_path": "tester-gate.html"
   },
   "icons": {
     "16": "icons/icon16.png",
@@ -42,11 +43,7 @@
       "resources": [
         "icons/*",
         "icons/agents/*",
-        "sidepanel.html",
-        "sidepanel-canvas.html",
-        "sidepanel-canvas-app.js",
-        "onboarding.js",
-        "content.js"
+        "config/*"
       ],
       "matches": ["<all_urls>"]
     }

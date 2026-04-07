@@ -16,6 +16,7 @@ class DecisionEngine {
 
     // Tool scoring: { 'fill_form:booking.com': { success: 5, fail: 2 } }
     this.toolScores = {};
+    this.providerScores = {};
     this._scoreTimer = null;
 
     // ── HARDCODED SAFETY LIMITS ──
@@ -27,7 +28,7 @@ class DecisionEngine {
   // ============================================================
   // MAIN ENTRY POINT — processRequest (with strategic retry loop)
   // ============================================================
-  async processRequest(message, context = {}) {
+  async processRequest(message, context = {}, options = {}) {
     console.log('[DecisionEngine] processRequest:', message);
 
     const requestId = crypto.randomUUID().substring(0, 8);
@@ -37,12 +38,28 @@ class DecisionEngine {
     let bestResult = { success: false, actions: [] };
     let bestVerified = { success: false, score: 0 };
     const failedStrategies = []; // track what didn't work and why
+    const verbose = options.verbose || false;
 
     try {
       // 1. ANALYZE: classify intent, extract entities, check KB
-      const analysis = await this.analyze(message, context);
+      const analysis = await this.analyze(message, context, { verbose });
       progressLog.push(`analisi completata: ${analysis.intentClass} (confidence: ${(analysis.confidence * 100).toFixed(0)}%)`);
       this._emitProgress(requestId, `analisi: ${analysis.intentClass}`);
+
+      // ── CONFIDENCE THRESHOLD: if confidence < 0.6, ask for clarification ──
+      if (analysis.confidence < 0.6) {
+        const clarifyOptions = this._generateClarifyOptions(message, analysis);
+        progressLog.push(`confidence bassa (${(analysis.confidence * 100).toFixed(0)}%), richiedo chiarimento`);
+        this._emitClarifyRequest(requestId, message, clarifyOptions);
+        return {
+          content: `Non sono completamente sicuro del tuo intento. Hai scopo: ${clarifyOptions.map((opt, i) => `${i+1}) ${opt.label}`).join(', ')}?`,
+          progressLog,
+          success: false,
+          actions: [],
+          pending: true,
+          clarifyOptions
+        };
+      }
 
       // ── STRATEGIC RETRY LOOP ──
       // Try up to MAX_STRATEGY_ATTEMPTS different strategies
@@ -64,15 +81,24 @@ class DecisionEngine {
         const strategyLabel = attempt === 0 ? 'strategia principale' : `strategia alternativa #${attempt + 1}`;
         progressLog.push(`${strategyLabel}: ${plan.steps.length} step, priorita: ${plan.priority}`);
         this._emitProgress(requestId, `${strategyLabel}: ${plan.steps.map(s => s.tool).join(' -> ')}`);
+        if (verbose) {
+          this._emitReasoningStep(requestId, 'plan', `Created ${strategyLabel}`, { steps: plan.steps.length, priority: plan.priority });
+        }
 
         // 3. EXECUTE: run plan
         const remainingBudget = this.MAX_TOTAL_TOOL_CALLS - totalToolCalls;
         plan.maxToolCalls = remainingBudget;
         const result = await this.executePlan(plan, context, progressLog, requestId);
         totalToolCalls += (result.actions || []).length;
+        if (verbose) {
+          this._emitReasoningStep(requestId, 'execute', `Executed ${result.actions?.length || 0} tools`, { actions: result.actions?.length || 0, errors: result.errors?.length || 0 });
+        }
 
         // 4. VERIFY: check if goal was achieved
         const verified = await this.verify(result, analysis, context);
+        if (verbose) {
+          this._emitReasoningStep(requestId, 'verify', `Verification score: ${(verified.score * 100).toFixed(0)}%`, { score: verified.score, success: verified.success });
+        }
 
         // Track best result so far
         if (verified.score > bestVerified.score) {
@@ -86,6 +112,9 @@ class DecisionEngine {
 
           // 5. LEARN from success
           await this.learn(analysis, plan, result, verified);
+          if (verbose) {
+            this._emitReasoningStep(requestId, 'learn', 'Pattern saved for future use', { source: 'success' });
+          }
           progressLog.push(`pattern salvato per uso futuro`);
 
           // 6. RESPOND
@@ -115,6 +144,15 @@ class DecisionEngine {
         }
 
         progressLog.push(`ragiono su un approccio diverso...`);
+      }
+
+      // ── EMIT REASONING STEPS if verbose ──
+      if (verbose) {
+        this._emitReasoningStep(requestId, 'analyze', 'Intent analysis completed', { intentClass: analysis.intentClass, confidence: analysis.confidence });
+        this._emitReasoningStep(requestId, 'plan', 'Strategy created', { strategies: failedStrategies.length });
+        this._emitReasoningStep(requestId, 'execute', 'Tools executed', { toolCalls: totalToolCalls });
+        this._emitReasoningStep(requestId, 'verify', 'Result verification', { score: bestVerified.score });
+        this._emitReasoningStep(requestId, 'learn', 'Learning completed', { patternsLearned: 1 });
       }
 
       // All attempts exhausted — return best result with honest summary
@@ -177,16 +215,80 @@ class DecisionEngine {
     } catch {}
   }
 
+  // ── Generate clarify options for low-confidence analysis ──
+  _generateClarifyOptions(message, analysis) {
+    const options = [];
+
+    // Suggest most likely interpretations based on keywords
+    if (message.match(/naviga|vai|apri|url/i)) {
+      options.push({ label: 'Navigare a un URL', intent: 'navigation' });
+    }
+    if (message.match(/compila|riempi|form|modulo/i)) {
+      options.push({ label: 'Compilare un form', intent: 'form_fill' });
+    }
+    if (message.match(/cerca|search|trova|google/i)) {
+      options.push({ label: 'Cercare informazioni', intent: 'search' });
+    }
+    if (message.match(/estrai|extract|scrapa|download/i)) {
+      options.push({ label: 'Estrarre dati', intent: 'extract' });
+    }
+    if (message.match(/clicca|click|premi|button/i)) {
+      options.push({ label: 'Interagire con elementi', intent: 'interaction' });
+    }
+
+    // Fallback to generic options if none matched
+    if (options.length === 0) {
+      options.push(
+        { label: 'Eseguire una ricerca', intent: 'search' },
+        { label: 'Navigare a una pagina', intent: 'navigation' },
+        { label: 'Estrarre dati da pagina', intent: 'extract' }
+      );
+    }
+
+    return options.slice(0, 3); // Return max 3 options
+  }
+
+  // ── Emit clarify request to sidepanel ──
+  _emitClarifyRequest(requestId, question, options) {
+    try {
+      chrome.runtime.sendMessage({
+        type: 'CHAT_CLARIFY_REQUEST',
+        payload: {
+          requestId,
+          question,
+          options
+        }
+      });
+    } catch {}
+  }
+
+  // ── Emit reasoning step for verbose tracing ──
+  _emitReasoningStep(requestId, step, description, data = {}) {
+    try {
+      chrome.runtime.sendMessage({
+        type: 'REASONING_STEP',
+        payload: {
+          requestId,
+          step,
+          description,
+          data,
+          timestamp: Date.now()
+        }
+      });
+    } catch {}
+  }
+
   // ============================================================
   // 1. ANALYZE — Intent, entities, KB lookup
   // ============================================================
-  async analyze(message, context) {
+  async analyze(message, context, options = {}) {
     const domainRules = context.currentUrl ? this.kb.searchByDomain(new URL(context.currentUrl).hostname) : [];
 
     // Simple intent classification
     let intentClass = 'unknown';
-    let entities = {};
+    const entities = {};
     let confidence = 0.5;
+    const verbose = options.verbose || false;
 
     if (message.match(/naviga|vai a|apri|url/i)) {
       intentClass = 'navigation';
@@ -550,21 +652,59 @@ class DecisionEngine {
     this._scheduleScoreSave();
   }
 
+  scoreProviderSuccess(provider) {
+    if (!this.providerScores[provider]) {
+      this.providerScores[provider] = { success: 0, fail: 0 };
+    }
+    this.providerScores[provider].success++;
+    this._scheduleScoreSave();
+  }
+
+  scoreProviderFailure(provider) {
+    if (!this.providerScores[provider]) {
+      this.providerScores[provider] = { success: 0, fail: 0 };
+    }
+    this.providerScores[provider].fail++;
+    this._scheduleScoreSave();
+  }
+
   _scheduleScoreSave() {
     if (this._scoreTimer) clearTimeout(this._scoreTimer);
     this._scoreTimer = setTimeout(() => {
-      chrome.storage.local.set({ cobra_tool_scores: this.toolScores })
-        .catch(e => console.warn('[DecisionEngine] Failed to save tool scores:', e));
-    }, 1000);
+      this._persistScores();
+    }, 2000); // 2s debounce as per spec
+  }
+
+  _persistScores() {
+    try {
+      chrome.storage.local.set({
+        cobra_tool_scores: this.toolScores,
+        cobra_provider_scores: this.providerScores
+      })
+        .catch(e => console.warn('[DecisionEngine] Failed to persist scores:', e));
+    } catch (e) {
+      console.warn('[DecisionEngine] Persist scores no-op fallback:', e);
+    }
   }
 
   async loadToolScores() {
     return new Promise((resolve) => {
-      chrome.storage.local.get('cobra_tool_scores', (data) => {
-        this.toolScores = data.cobra_tool_scores || {};
-        resolve(this.toolScores);
-      });
+      try {
+        chrome.storage.local.get(['cobra_tool_scores', 'cobra_provider_scores'], (data) => {
+          this.toolScores = data.cobra_tool_scores || {};
+          this.providerScores = data.cobra_provider_scores || {};
+          resolve({ toolScores: this.toolScores, providerScores: this.providerScores });
+        });
+      } catch (e) {
+        console.warn('[DecisionEngine] loadToolScores fallback:', e);
+        resolve({ toolScores: {}, providerScores: {} });
+      }
     });
+  }
+
+  async init() {
+    await this.loadToolScores();
+    console.log('[DecisionEngine] Initialized with persisted scores');
   }
 }
 
