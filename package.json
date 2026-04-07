@@ -30,7 +30,7 @@
     "husky": "^9.0.0",
     "lint-staged": "^15.2.0",
     "@commitlint/cli": "^19.0.0",
-    "@commitlint/config-conventional": "^19.0.0",
+    "@commitlint/config-conventional": "^20.5.0",
     "@cyclonedx/cyclonedx-npm": "^5.0.0"
   },
   "engines": {
